@@ -1,0 +1,127 @@
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}
+
+.bgMesh {
+  background-color: #001551;
+  background-image:
+          radial-gradient(at 0% 0%, hsla(225, 80%, 15%, 1) 0, transparent 50%),
+          radial-gradient(at 50% 0%, hsla(224, 76%, 33%, 1) 0, transparent 50%),
+          radial-gradient(at 100% 0%, hsla(225, 80%, 15%, 1) 0, transparent 50%);
+}
+
+.glassEffect {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leftSide {
+  position: relative;
+  display: none;
+  width: 50%;
+  padding: 3rem;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  overflow: hidden;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 5rem;
+  }
+}
+
+.rightSide {
+  flex: 1;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+
+  @media (min-width: 1024px) {
+    padding: 5rem;
+  }
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    background-color: #f3f4f5;
+    border: none;
+    border-radius: 0.75rem;
+    transition: all 0.3s;
+    outline: none;
+
+    &:focus {
+      background-color: #ffffff;
+    }
+  }
+
+  .focusLine {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background-color: #0037b0;
+    transition: all 0.3s;
+  }
+
+  input:focus + .focusLine {
+    width: 100%;
+  }
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(to bottom right, #0037b0, #1d4ed8);
+  color: white;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 55, 176, 0.2);
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.forgotPass {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #515f74; // secondary
+  font-weight: 500;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #0037b0;
+  }
+}

@@ -1,0 +1,79 @@
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.bgMesh {
+  background-color: #001551;
+  background-image:
+          radial-gradient(at 0% 0%, hsla(225, 80%, 15%, 1) 0, transparent 50%),
+          radial-gradient(at 50% 0%, hsla(224, 76%, 33%, 1) 0, transparent 50%),
+          radial-gradient(at 100% 0%, hsla(225, 80%, 15%, 1) 0, transparent 50%);
+}
+
+.glassCard {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3rem 2rem;
+  border-radius: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+.errorCode {
+  font-size: 6rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.description {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.homeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  background: #ffffff;
+  color: #001551; // Тёмно-синий цвет бренда
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  text-decoration: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
