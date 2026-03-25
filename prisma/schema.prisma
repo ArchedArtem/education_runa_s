@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique 
+  description String?
+  users       User[]
+}
+
+model User {
+  id            String         @id @default(uuid())
+  role_id       Int
+  role          Role           @relation(fields: [role_id], references: [id])
+  company_name  String?        
+  first_name    String
+  last_name     String
+  email         String         @unique
+  password_hash String
+  created_at    DateTime       @default(now())
+  
+  progress      UserProgress[]
+  test_results  TestResult[]
+}
+
+model Course {
+  id               Int       @id @default(autoincrement())
+  title            String
+  description      String?   @db.Text
+  software_product String    
+  thumbnail_url    String?
+  is_published     Boolean   @default(false)
+  created_at       DateTime  @default(now())
+  
+  lessons          Lesson[]
+  tests            Test[]
+}
+
+model Lesson {
+  id          Int       @id @default(autoincrement())
+  course_id   Int
+  course      Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  title       String
+  content     String?   @db.Text
+  video_url   String?
+  order_index Int
+  created_at  DateTime  @default(now())
+  
+  materials   Material[]
+  progress    UserProgress[]
+}
+
+model Material {
+  id          Int      @id @default(autoincrement())
+  lesson_id   Int
+  lesson      Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  file_name   String
+  file_url    String
+  file_type   String
+}
+
+model Test {
+  id            Int      @id @default(autoincrement())
+  course_id     Int
+  course        Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  title         String
+  passing_score Int
+  
+  questions     Question[]
+  results       TestResult[]
+}
+
+model Question {
+  id            Int      @id @default(autoincrement())
+  test_id       Int
+  test          Test     @relation(fields: [test_id], references: [id], onDelete: Cascade)
+  question_text String   @db.Text
+  question_type String
+  
+  answers       Answer[]
+}
+
+model Answer {
+  id            Int      @id @default(autoincrement())
+  question_id   Int
+  question      Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  answer_text   String   @db.Text
+  is_correct    Boolean  @default(false)
+}
+
+model UserProgress {
+  id           Int      @id @default(autoincrement())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson_id    Int
+  lesson       Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  is_completed Boolean  @default(false)
+  completed_at DateTime?
+}
+
+model TestResult {
+  id           Int      @id @default(autoincrement())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  test_id      Int
+  test         Test     @relation(fields: [test_id], references: [id], onDelete: Cascade)
+  score        Int
+  is_passed    Boolean
+  attempt_date DateTime @default(now())
+}

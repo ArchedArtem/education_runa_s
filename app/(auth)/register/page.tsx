@@ -1,10 +1,55 @@
+"use client";
 import Link from 'next/link';
 import styles from './Register.module.scss';
-
+import { useRouter } from 'next/navigation';
+import {useState} from "react";
 export default function RegisterPage() {
+    const router = useRouter();
+
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        companyData: '',
+        password: ''
+    });
+
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Что-то пошло не так');
+            }
+
+            alert('Регистрация успешна! Теперь вы можете войти.');
+            router.push('/login');
+
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <main className={styles.main}>
-            {/* LEFT SIDE: Branding & Value */}
             <section className={`${styles.leftSide} ${styles.bgMesh}`}>
                 <div className="absolute top-[10%] -left-20 w-64 h-64 rounded-full border border-white/10 glass-effect"></div>
                 <div className="absolute bottom-[20%] -right-10 w-96 h-96 rounded-full border border-white/10 glass-effect"></div>
@@ -30,7 +75,6 @@ export default function RegisterPage() {
                 </div>
             </section>
 
-            {/* RIGHT SIDE: The Registration Form */}
             <section className={styles.rightSide}>
                 <div className="w-full max-w-md">
                     <div className="mb-10">
@@ -38,49 +82,80 @@ export default function RegisterPage() {
                         <p className="text-slate-500 text-sm">Пожалуйста, заполните данные для создания вашей учетной записи</p>
                     </div>
 
-                    <form className="space-y-6">
-                        {/* ФИО */}
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
+                            {error}
+                        </div>
+                    )}
+
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">ФИО</label>
                             <div className={styles.inputWrapper}>
                                 <span className="material-symbols-outlined absolute left-4 text-slate-400">person</span>
-                                <input type="text" placeholder="Имя и Фамилия" />
+                                <input
+                                    type="text"
+                                    name="fullName"
+                                    placeholder="Имя и Фамилия"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
+                                    required
+                                />
                                 <div className={styles.focusLine}></div>
                             </div>
                         </div>
 
-                        {/* Email */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Почта</label>
                             <div className={styles.inputWrapper}>
                                 <span className="material-symbols-outlined absolute left-4 text-slate-400">mail</span>
-                                <input type="email" placeholder="Рабочий Email" />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    placeholder="Рабочий Email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                />
                                 <div className={styles.focusLine}></div>
                             </div>
                         </div>
 
-                        {/* ИНН / Код */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Корпоративные данные</label>
                             <div className={styles.inputWrapper}>
                                 <span className="material-symbols-outlined absolute left-4 text-slate-400">shield</span>
-                                <input type="text" placeholder="ИНН компании или код приглашения" /> {/* Соотв. ТЗ  */}
+                                <input
+                                    type="text"
+                                    name="companyData"
+                                    placeholder="ИНН компании или код приглашения"
+                                    value={formData.companyData}
+                                    onChange={handleChange}
+                                    required
+                                />
                                 <div className={styles.focusLine}></div>
                             </div>
                         </div>
 
-                        {/* Password */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Безопасность</label>
                             <div className={styles.inputWrapper}>
                                 <span className="material-symbols-outlined absolute left-4 text-slate-400">lock</span>
-                                <input type="password" placeholder="Придумайте пароль" />
+                                <input
+                                    type="password"
+                                    name="password"
+                                    placeholder="Придумайте пароль"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    minLength={6}
+                                />
                                 <div className={styles.focusLine}></div>
                             </div>
                         </div>
 
-                        <button type="submit" className={styles.submitBtn}>
-                            Создать аккаунт
+                        <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+                            {isLoading ? 'Создание аккаунта...' : 'Создать аккаунт'}
                         </button>
 
                         <div className="text-center pt-4">
