@@ -1,12 +1,13 @@
 "use client";
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import {usePathname, useRouter} from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './Header.module.scss';
 
 export default function Header() {
     const router = useRouter();
+    const pathname = usePathname();
     const [isAuth, setIsAuth] = useState(false);
 
     useEffect(() => {
@@ -38,10 +39,35 @@ export default function Header() {
                 </Link>
 
                 <div className={styles.nav}>
-                    <Link href="/about" className={styles.linkActive}>О платформе</Link>
-                    <Link href="/catalog" className={styles.link}>Программа</Link>
-                    <Link href="/contacts" className={styles.link}>Контакты</Link>
-                    {isAuth && <Link href="/dashboard" className={styles.link}>Мое обучение</Link>}
+                    <Link
+                        href="/about"
+                        className={pathname === '/about' ? styles.linkActive : styles.link}
+                    >
+                        О платформе
+                    </Link>
+
+                    <Link
+                        href="/catalog"
+                        className={pathname === '/catalog' ? styles.linkActive : styles.link}
+                    >
+                        Программа
+                    </Link>
+
+                    <Link
+                        href="/contacts"
+                        className={pathname === '/contacts' ? styles.linkActive : styles.link}
+                    >
+                        Контакты
+                    </Link>
+
+                    {isAuth && (
+                        <Link
+                            href="/dashboard"
+                            className={pathname === '/dashboard' ? styles.linkActive : styles.link}
+                        >
+                            Мое обучение
+                        </Link>
+                    )}
                 </div>
 
                 <div className={styles.actions}>
