@@ -1,0 +1,37 @@
+.dashboardBg {
+  background-color: #f8f9fa; /* Светло-серый фон под сеткой */
+  background-image:
+          linear-gradient(to right, rgba(0, 55, 176, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 55, 176, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.glassCard {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.625rem 1rem; /* py-2.5 px-4 */
+  background-color: #f8fafc; /* bg-slate-50 */
+  border: 1px solid #e2e8f0; /* border-slate-200 */
+  border-radius: 0.5rem; /* rounded-lg */
+  color: #0f172a; /* text-slate-900 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+
+  &::placeholder {
+    color: #94a3b8; /* text-slate-400 */
+    font-weight: 400;
+  }
+
+  &:focus {
+    background-color: #ffffff;
+    border-color: #1d4ed8; /* focus:border-blue-700 */
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.1); /* focus:ring-blue-700/10 */
+  }
+}
