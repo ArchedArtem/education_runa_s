@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
         // 5. Отправляем письмо через Resend
         await resend.emails.send({
-            from: "Руна С Обучение <onboarding@resend.dev>", // Для тестов используем домен resend
+            from: `Руна С Обучение <${process.env.RESEND_FROM_EMAIL}>`,
             to: email,
             subject: "Восстановление пароля | Руна С Обучение",
             html: `
