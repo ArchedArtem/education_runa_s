@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import styles from './Register.module.scss';
 import { useRouter } from 'next/navigation';
-import {useState} from "react";
+import { useState } from "react";
+
 export default function RegisterPage() {
     const router = useRouter();
 
@@ -10,7 +11,9 @@ export default function RegisterPage() {
         fullName: '',
         email: '',
         companyData: '',
-        password: ''
+        inviteCode: '',
+        password: '',
+        confirmPassword: ''
     });
 
     const [error, setError] = useState('');
@@ -23,19 +26,27 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('Пароли не совпадают');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
+            const { confirmPassword, ...dataToSend } = formData;
+
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(dataToSend),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Что-то пошло не так');
+                throw new Error(data.error || 'Что-то пошло не так. Проверьте данные.');
             }
 
             alert('Регистрация успешна! Теперь вы можете войти.');
@@ -77,7 +88,7 @@ export default function RegisterPage() {
 
             <section className={styles.rightSide}>
                 <div className="w-full max-w-md">
-                    <div className="mb-10">
+                    <div className="mb-8">
                         <h2 className="text-3xl font-bold text-slate-900 mb-2">Регистрация</h2>
                         <p className="text-slate-500 text-sm">Пожалуйста, заполните данные для создания вашей учетной записи</p>
                     </div>
@@ -88,7 +99,8 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    <form className="space-y-6" onSubmit={handleSubmit}>
+                    <form className="space-y-5" onSubmit={handleSubmit}>
+
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">ФИО</label>
                             <div className={styles.inputWrapper}>
@@ -122,13 +134,13 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Корпоративные данные</label>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Организация</label>
                             <div className={styles.inputWrapper}>
-                                <span className="material-symbols-outlined absolute left-4 text-slate-400">shield</span>
+                                <span className="material-symbols-outlined absolute left-4 text-slate-400">domain</span>
                                 <input
                                     type="text"
                                     name="companyData"
-                                    placeholder="ИНН компании или код приглашения"
+                                    placeholder="ООО Ромашка (название полностью)"
                                     value={formData.companyData}
                                     onChange={handleChange}
                                     required
@@ -138,30 +150,65 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Безопасность</label>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Код доступа</label>
                             <div className={styles.inputWrapper}>
-                                <span className="material-symbols-outlined absolute left-4 text-slate-400">lock</span>
+                                <span className="material-symbols-outlined absolute left-4 text-slate-400">confirmation_number</span>
                                 <input
-                                    type="password"
-                                    name="password"
-                                    placeholder="Придумайте пароль"
-                                    value={formData.password}
+                                    type="text"
+                                    name="inviteCode"
+                                    placeholder="Введите пригласительный код"
+                                    value={formData.inviteCode}
                                     onChange={handleChange}
                                     required
-                                    minLength={6}
                                 />
                                 <div className={styles.focusLine}></div>
                             </div>
                         </div>
 
-                        <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Пароль</label>
+                                <div className={styles.inputWrapper}>
+                                    <span className="material-symbols-outlined absolute left-4 text-slate-400">lock</span>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        placeholder="От 6 символов"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        required
+                                        minLength={6}
+                                    />
+                                    <div className={styles.focusLine}></div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Повторите</label>
+                                <div className={styles.inputWrapper}>
+                                    <span className="material-symbols-outlined absolute left-4 text-slate-400">lock</span>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        placeholder="Пароль еще раз"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        required
+                                        minLength={6}
+                                    />
+                                    <div className={styles.focusLine}></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" className={`${styles.submitBtn} mt-2`} disabled={isLoading}>
                             {isLoading ? 'Создание аккаунта...' : 'Создать аккаунт'}
                         </button>
 
-                        <div className="text-center pt-4">
+                        <div className="text-center pt-2">
                             <p className="text-slate-500 text-sm">
                                 Уже есть аккаунт?
-                                <Link href="/login" className="text-blue-600 font-semibold hover:underline ml-1">Войти</Link>
+                                <Link href="/login" className="text-blue-700 font-semibold hover:underline ml-1">Войти</Link>
                             </p>
                         </div>
                     </form>

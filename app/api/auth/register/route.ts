@@ -5,10 +5,18 @@ import prisma from "@/lib/prisma";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { fullName, email, companyData, password } = body;
+        const { fullName, email, companyData, inviteCode, password } = body;
 
-        if (!email || !password || !fullName || !companyData) {
+        if (!email || !password || !fullName || !companyData || !inviteCode) {
             return NextResponse.json({ error: "Заполните все поля" }, { status: 400 });
+        }
+
+        const validInvite = await prisma.inviteCode.findUnique({
+            where: { code: inviteCode }
+        });
+
+        if (!validInvite || !validInvite.isActive) {
+            return NextResponse.json({ error: "Неверный или неактивный код доступа" }, { status: 400 });
         }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
