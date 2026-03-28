@@ -3,6 +3,8 @@ import "../globals.css";
 import Header from "@/app/components/Header/Header";
 import Footer from "@/app/components/Footer/Footer";
 
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 export const metadata: Metadata = {
     title: "Обучение Руна С",
     description: "Платформа дистанционного обучения клиентов 1С",
@@ -22,6 +24,7 @@ export default function RootLayout({
         <main className="flex-grow">
             {children}
         </main>
+        <SpeedInsights/>
         </body>
         </html>
     );
