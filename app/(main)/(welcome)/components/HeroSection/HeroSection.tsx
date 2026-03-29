@@ -20,17 +20,16 @@ export default function HeroSection() {
             <div className={styles.mockupWrapper}>
                 <div className={styles.mockupGlow}></div>
                 <div className={styles.mockupCard}>
-
                     <div className={styles.mockupBody}>
                         <div className="flex-1 space-y-4">
                             <div className="aspect-video bg-slate-800 rounded-xl relative flex items-center justify-center">
-                                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                                    <span className="material-symbols-outlined text-white text-3xl">play_arrow</span>
+                                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                                    <span className="material-symbols-outlined text-white text-2xl md:text-3xl">play_arrow</span>
                                 </div>
                             </div>
-                            <div className="h-4 w-32 bg-slate-200 rounded"></div>
-                            <div className="grid grid-cols-4 gap-2">
-                                {[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-slate-100 rounded"></div>)}
+                            <div className="h-4 w-24 md:w-32 bg-slate-200 rounded"></div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                                {[1, 2, 3, 4].map(i => <div key={i} className="h-8 md:h-10 bg-slate-100 rounded"></div>)}
                             </div>
                         </div>
                     </div>

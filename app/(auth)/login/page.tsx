@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './Login.module.scss';
+import styles from './login.module.scss';
 
 export default function LoginPage() {
     const router = useRouter();

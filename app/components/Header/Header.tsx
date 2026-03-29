@@ -1,14 +1,15 @@
 "use client";
 
 import Link from 'next/link';
-import {usePathname, useRouter} from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import styles from './Header.module.scss';
+import styles from './header.module.scss';
 
 export default function Header() {
     const router = useRouter();
     const pathname = usePathname();
     const [isAuth, setIsAuth] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -22,6 +23,10 @@ export default function Header() {
         checkAuth();
     }, []);
 
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
     const handleLogout = async () => {
         const res = await fetch('/api/auth/logout', { method: 'POST' });
         if (res.ok) {
@@ -29,6 +34,10 @@ export default function Header() {
             router.push('/');
             router.refresh();
         }
+    };
+
+    const toggleMobileMenu = () => {
+        setIsMobileMenuOpen(!isMobileMenuOpen);
     };
 
     return (
@@ -45,21 +54,18 @@ export default function Header() {
                     >
                         О платформе
                     </Link>
-
                     <Link
                         href="/catalog"
                         className={pathname === '/catalog' ? styles.linkActive : styles.link}
                     >
                         Программа
                     </Link>
-
                     <Link
                         href="/contacts"
                         className={pathname === '/contacts' ? styles.linkActive : styles.link}
                     >
                         Контакты
                     </Link>
-
                     {isAuth && (
                         <Link
                             href="/dashboard"
@@ -70,7 +76,7 @@ export default function Header() {
                     )}
                 </div>
 
-                <div className={styles.actions}>
+                <div className={styles.desktopActions}>
                     {!isAuth ? (
                         <>
                             <Link href="/login" className={styles.loginBtn}>Вход</Link>
@@ -78,6 +84,65 @@ export default function Header() {
                         </>
                     ) : (
                         <button onClick={handleLogout} className={styles.registerBtn}>
+                            Выйти
+                        </button>
+                    )}
+                </div>
+
+                <button
+                    className={styles.menuButton}
+                    onClick={toggleMobileMenu}
+                    aria-label="Меню"
+                >
+                    <span className={`${styles.hamburger} ${isMobileMenuOpen ? styles.open : ''}`} />
+                </button>
+            </div>
+
+            <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+                <div className={styles.mobileNav}>
+                    <Link
+                        href="/about"
+                        className={pathname === '/about' ? styles.mobileLinkActive : styles.mobileLink}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        О платформе
+                    </Link>
+                    <Link
+                        href="/catalog"
+                        className={pathname === '/catalog' ? styles.mobileLinkActive : styles.mobileLink}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        Программа
+                    </Link>
+                    <Link
+                        href="/contacts"
+                        className={pathname === '/contacts' ? styles.mobileLinkActive : styles.mobileLink}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        Контакты
+                    </Link>
+                    {isAuth && (
+                        <Link
+                            href="/dashboard"
+                            className={pathname === '/dashboard' ? styles.mobileLinkActive : styles.mobileLink}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            Мое обучение
+                        </Link>
+                    )}
+                </div>
+                <div className={styles.mobileActions}>
+                    {!isAuth ? (
+                        <>
+                            <Link href="/login" className={styles.mobileLoginBtn} onClick={() => setIsMobileMenuOpen(false)}>
+                                Вход
+                            </Link>
+                            <Link href="/register" className={styles.mobileRegisterBtn} onClick={() => setIsMobileMenuOpen(false)}>
+                                Регистрация
+                            </Link>
+                        </>
+                    ) : (
+                        <button onClick={handleLogout} className={styles.mobileRegisterBtn}>
                             Выйти
                         </button>
                     )}
