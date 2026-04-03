@@ -8,17 +8,21 @@ export default function CtaSection() {
                 <div className={styles.glowTop}></div>
                 <div className={styles.glowBottom}></div>
 
-                <h2 className={styles.title}>
-                    Готовы повысить свою квалификацию?
-                </h2>
+                <div className={styles.content}>
+                    <h2 className={styles.title}>
+                        Готовы повысить свою квалификацию?
+                    </h2>
 
-                <p className={styles.description}>
-                    Получите доступ к уникальной базе знаний и станьте востребованным специалистом в экосистеме 1С уже сегодня.
-                </p>
+                    <p className={styles.description}>
+                        Получите доступ к уникальной базе знаний и станьте востребованным специалистом в экосистеме 1С уже сегодня.
+                    </p>
 
-                <Link href="/register" className={styles.actionBtn}>
-                    Регистрация на платформе
-                </Link>
+                    <div className={styles.actionWrapper}>
+                        <Link href="/register" className={styles.actionBtn}>
+                            Регистрация на платформе
+                        </Link>
+                    </div>
+                </div>
             </div>
         </section>
     );

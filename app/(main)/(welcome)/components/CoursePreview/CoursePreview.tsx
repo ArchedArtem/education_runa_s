@@ -16,7 +16,7 @@ export default function CoursePreview() {
 
     const scroll = (direction: 'left' | 'right') => {
         if (sliderRef.current) {
-            const scrollAmount = sliderRef.current.offsetWidth / 2;
+            const scrollAmount = sliderRef.current.offsetWidth * 0.8;
 
             sliderRef.current.scrollBy({
                 left: direction === 'left' ? -scrollAmount : scrollAmount,
@@ -29,12 +29,12 @@ export default function CoursePreview() {
         <section className={styles.section}>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h2>Доступные программы</h2>
+                    <h2 className={styles.title}>Доступные программы</h2>
                     <div className={styles.navBtns}>
-                        <button onClick={() => scroll('left')}>
+                        <button onClick={() => scroll('left')} aria-label="Назад">
                             <span className="material-symbols-outlined">chevron_left</span>
                         </button>
-                        <button onClick={() => scroll('right')}>
+                        <button onClick={() => scroll('right')} aria-label="Вперед">
                             <span className="material-symbols-outlined">chevron_right</span>
                         </button>
                     </div>
@@ -79,6 +79,7 @@ export default function CoursePreview() {
                             </button>
                         </div>
                     ))}
+                    <div className={styles.spacer}></div>
                 </div>
             </div>
         </section>
