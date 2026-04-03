@@ -18,6 +18,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Неверный email или пароль" }, { status: 401 });
         }
 
+        if (user.is_block) {
+            return NextResponse.json({ error: "Ваша учетная запись заблокирована" }, { status: 403 });
+        }
+
         const isPasswordValid = await bcrypt.compare(password, user.password_hash);
         if (!isPasswordValid) {
             return NextResponse.json({ error: "Неверный email или пароль" }, { status: 401 });
