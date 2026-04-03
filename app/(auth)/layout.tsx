@@ -4,6 +4,7 @@ import Header from "@/app/components/Header/Header";
 import Footer from "@/app/components/Footer/Footer";
 
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
     title: "Обучение Руна С",
@@ -25,6 +26,7 @@ export default function RootLayout({
             {children}
         </main>
         <SpeedInsights/>
+        <Analytics/>
         </body>
         </html>
     );
