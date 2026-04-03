@@ -1,0 +1,45 @@
+@reference "../../../../../../globals.css";
+
+.videoContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #0f172a;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.sidebarScroll {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+  }
+}
+
+.textContent {
+  h1, h2, h3 { @apply font-bold text-slate-900 mb-4 mt-6; }
+  p { @apply mb-4 text-slate-700 leading-relaxed; }
+  ul { @apply list-disc ml-5 mb-4 text-slate-700; }
+  li { @apply mb-1; }
+  a { @apply text-blue-600 underline; }
+}

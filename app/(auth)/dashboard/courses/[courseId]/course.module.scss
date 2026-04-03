@@ -1,0 +1,44 @@
+.heroBanner {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  color: white;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.4));
+  z-index: 1;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.lessonItem {
+  transition: all 0.2s ease-in-out;
+}
+
+.lessonItem:hover {
+  background-color: #f8fafc;
+  border-color: #bfdbfe;
+  transform: translateX(4px);
+}
+
+.completed {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.notCompleted {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
