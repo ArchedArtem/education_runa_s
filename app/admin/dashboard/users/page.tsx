@@ -393,7 +393,7 @@ export default function AdminUsersPage() {
                                     type="text"
                                     placeholder="ALFA-BANK-2026"
                                     value={newInvite.code}
-                                    onChange={(e) => setNewInvite({...newInvite, code: e.target.value})}
+                                    onChange={(e) => setNewInvite({...newInvite, code: e.target.value.toUpperCase()})}
                                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 font-mono text-blue-100 outline-none focus:border-blue-500 transition-all text-sm"
                                     required
                                 />

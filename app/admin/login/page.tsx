@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.scss';
 
@@ -10,6 +10,25 @@ export default function AdminLoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('/api/admin/auth/me');
+                if (res.ok) {
+                    router.push('/admin/dashboard');
+                } else {
+                    setIsCheckingAuth(false);
+                }
+            } catch (err) {
+                setIsCheckingAuth(false);
+            }
+        };
+
+        checkAuth();
+    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,8 +56,29 @@ export default function AdminLoginPage() {
         }
     };
 
+    if (isCheckingAuth) {
+        return (
+            <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center space-y-6">
+                <div className="relative flex items-center justify-center w-24 h-24">
+                    <div className="absolute inset-0 rounded-full border-4 border-slate-800 border-t-blue-500 animate-spin"></div>
+                    <div className="relative w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white shadow-lg">
+                        <span className="material-symbols-outlined text-4xl text-blue-500">shield</span>
+                    </div>
+                </div>
+                <div className="flex flex-col items-center space-y-1">
+                    <h2 className="text-xl font-bold text-white tracking-tight">
+                        Руна С • CMS
+                    </h2>
+                    <p className="text-sm font-medium text-slate-400 animate-pulse">
+                        Проверка прав доступа...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <main className={`min-h-screen flex items-center justify-center p-4 ${styles.adminBg} font-sans`}>
+        <main className={`min-h-screen flex items-center justify-center p-4 ${styles.adminBg} font-sans animate-in fade-in duration-300`}>
 
             <div className="w-full max-w-md flex flex-col items-center">
 
@@ -89,6 +129,7 @@ export default function AdminLoginPage() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         className={styles.inputField}
+                                        style={{ paddingLeft: '2.5rem' }}
                                     />
                                 </div>
                             </div>
@@ -104,6 +145,7 @@ export default function AdminLoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         className={styles.inputField}
+                                        style={{ paddingLeft: '2.5rem' }}
                                     />
                                 </div>
                             </div>

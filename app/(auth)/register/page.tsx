@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import styles from './register.module.scss';
 import { useRouter } from 'next/navigation';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -18,6 +18,25 @@ export default function RegisterPage() {
 
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    router.push('/dashboard');
+                } else {
+                    setIsCheckingAuth(false);
+                }
+            } catch (err) {
+                setIsCheckingAuth(false);
+            }
+        };
+
+        checkAuth();
+    }, [router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -59,8 +78,30 @@ export default function RegisterPage() {
         }
     };
 
+    if (isCheckingAuth) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-6 font-sans">
+                <div className="relative flex items-center justify-center w-24 h-24">
+                    <div className="absolute inset-0 rounded-full border-4 border-slate-200 border-t-blue-700 animate-spin"></div>
+                    <div className="relative w-16 h-16 rounded-2xl bg-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-700/30">
+                        <span className="material-symbols-outlined text-4xl">shield</span>
+                    </div>
+                </div>
+
+                <div className="flex flex-col items-center space-y-1">
+                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                        Руна С Обучение
+                    </h2>
+                    <p className="text-sm font-medium text-blue-700 animate-pulse">
+                        Проверка сессии...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <main className={styles.main}>
+        <main className={`${styles.main} animate-in fade-in duration-500`}>
             <section className={`${styles.leftSide} ${styles.bgMesh}`}>
                 <div className="absolute top-[10%] -left-20 w-64 h-64 rounded-full border border-white/10 glass-effect"></div>
                 <div className="absolute bottom-[20%] -right-10 w-96 h-96 rounded-full border border-white/10 glass-effect"></div>

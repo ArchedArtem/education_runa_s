@@ -1,38 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import AdminSidebar from "./components/Sidebar/Sidebar";
 import AdminHeader from "./components/Header/Header";
 import AdminFooter from "./components/Footer/Footer";
 
-export default function AdminDashboardLayout({
-                                                 children,
-                                             }: {
-    children: React.ReactNode;
-}) {
+export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    // const [isAdmin, setIsAdmin] = useState(false);
-    //
-    // useEffect(() => {
-    //     const checkAdminAuth = async () => {
-    //         try {
-    //             const res = await fetch('/api/admin/auth/me');
-    //             if (res.ok) {
-    //                 setIsAdmin(true);
-    //             } else {
-    //                 router.push('/admin/login');
-    //             }
-    //         } catch (error) {
-    //             router.push('/admin/login');
-    //         }
-    //     };
-    //     checkAdminAuth();
-    // }, [router]);
+    const pathname = usePathname();
 
-    const isAdmin = true;
+    const [isChecking, setIsChecking] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
 
-    if (!isAdmin) {
+    useEffect(() => {
+        const checkAdminAuth = async () => {
+            try {
+                const res = await fetch('/api/admin/auth/me');
+
+                if (res.ok) {
+                    setIsAdmin(true);
+                    setIsChecking(false);
+                } else {
+                    router.push('/admin/login');
+                }
+            } catch (error) {
+                router.push('/admin/login');
+            }
+        };
+
+        checkAdminAuth();
+    }, [router, pathname]);
+
+    if (isChecking) {
         return (
             <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center space-y-6">
                 <div className="relative flex items-center justify-center w-24 h-24">
@@ -46,26 +46,30 @@ export default function AdminDashboardLayout({
                         Руна С • CMS
                     </h2>
                     <p className="text-sm font-medium text-slate-400 animate-pulse">
-                        Проверка прав доступа...
+                        Загрузка админ-панели...
                     </p>
                 </div>
             </div>
         );
     }
 
-    return (
-        <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans text-slate-900">
-            <AdminSidebar />
+    if (isAdmin) {
+        return (
+            <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans text-slate-900 animate-in fade-in duration-500">
+                <AdminSidebar />
 
-            <main className="flex-1 ml-64 min-h-screen flex flex-col relative">
-                <AdminHeader />
+                <main className="flex-1 ml-64 min-h-screen flex flex-col relative">
+                    <AdminHeader />
 
-                <div className="flex-1">
-                    {children}
-                </div>
+                    <div className="flex-1">
+                        {children}
+                    </div>
 
-                <AdminFooter />
-            </main>
-        </div>
-    );
+                    <AdminFooter />
+                </main>
+            </div>
+        );
+    }
+
+    return null;
 }
