@@ -1,0 +1,18 @@
+@reference "../../../../../../../globals.css";
+
+.customScroll {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+  }
+}
