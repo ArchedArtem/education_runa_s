@@ -9,6 +9,7 @@ const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 const INITIAL_LESSON = {
     title: '',
+    videoType: 'link',
     videoUrl: '',
     content: '',
     isPublished: false,
@@ -32,7 +33,7 @@ export default function NewLessonPage() {
     const [isSaving, setIsSaving] = useState(false);
 
     const [lessonData, setLessonData] = useState(INITIAL_LESSON);
-    const [files, setFiles] = useState<any[]>([]); // Пока пустой массив для файлов
+    const [files, setFiles] = useState<any[]>([]);
     const [testData, setTestData] = useState<{isEnabled: boolean, passingScore: number, questions: Question[]}>(INITIAL_TEST);
 
     const handleAddQuestion = () => {
@@ -148,24 +149,50 @@ export default function NewLessonPage() {
                                 />
                             </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                                    Ссылка на видео
-                                    <span className="material-symbols-outlined text-[14px] text-slate-400" title="Поддерживаются ссылки на YouTube, Rutube или прямые ссылки на mp4">info</span>
-                                </label>
-                                <div className="relative">
-                                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">link</span>
-                                    <input
-                                        type="url"
-                                        value={lessonData.videoUrl}
-                                        onChange={e => setLessonData({...lessonData, videoUrl: e.target.value})}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-700 focus:bg-white transition-all"
-                                        placeholder="https://"
-                                    />
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Видео к уроку</label>
+
+                                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                        <button
+                                            onClick={() => setLessonData({...lessonData, videoType: 'link'})}
+                                            className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${lessonData.videoType === 'link' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            По ссылке
+                                        </button>
+                                        <button
+                                            onClick={() => setLessonData({...lessonData, videoType: 'upload'})}
+                                            className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${lessonData.videoType === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Свой файл
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {lessonData.videoType === 'link' ? (
+                                    <div className="relative animate-in fade-in zoom-in-95 duration-200">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">link</span>
+                                        <input
+                                            type="url"
+                                            value={lessonData.videoUrl}
+                                            onChange={e => setLessonData({...lessonData, videoUrl: e.target.value})}
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-700 focus:bg-white transition-all"
+                                            placeholder="https://youtube.com/... или https://rutube.ru/..."
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 hover:bg-blue-50/50 hover:border-blue-400 transition-colors cursor-pointer group animate-in fade-in zoom-in-95 duration-200">
+                                        <span className="material-symbols-outlined text-3xl text-blue-600 mb-2 group-hover:scale-110 transition-transform">video_library</span>
+                                        <p className="text-sm font-bold text-slate-900">Загрузить видеофайл</p>
+                                        <p className="text-xs text-slate-500 mb-3">MP4, WebM (до 2 ГБ).</p>
+                                        <button className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg shadow-sm text-xs cursor-pointer hover:bg-slate-50 transition-colors">
+                                            Выбрать видео на компьютере
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 pt-2">
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Текстовый конспект</label>
                                 </div>
@@ -358,7 +385,6 @@ export default function NewLessonPage() {
                                                         <button
                                                             onClick={() => {
                                                                 const newQuestions = [...testData.questions];
-                                                                // Если тип "один вариант" - сбрасываем остальные галочки
                                                                 if (q.type === 'single') {
                                                                     newQuestions[index].options.forEach(o => o.isCorrect = false);
                                                                 }
