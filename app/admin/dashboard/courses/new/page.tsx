@@ -8,23 +8,31 @@ const INITIAL_COURSE = {
     softwareProduct: '',
     authors: '',
     description: '',
-    thumbnailUrl: '',
     isPublished: false,
+    thumbnailUrl: undefined
 };
 
 export default function NewCoursePage() {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [courseData, setCourseData] = useState(INITIAL_COURSE);
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const imageUrl = URL.createObjectURL(file);
-            setPreviewImage(imageUrl);
-            setCourseData({ ...courseData, thumbnailUrl: file.name });
-        }
+        if (!file) return;
+
+        setSelectedFile(file);
+
+        const tempUrl = URL.createObjectURL(file);
+        setPreviewImage(tempUrl);
+    };
+
+    const handleRemoveImage = () => {
+        setPreviewImage(null);
+        setSelectedFile(null);
     };
 
     const handleSave = async () => {
@@ -34,11 +42,51 @@ export default function NewCoursePage() {
         }
 
         setIsSaving(true);
-        setTimeout(() => {
+        let finalThumbnailUrl = courseData.thumbnailUrl;
+
+        try {
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const uploadRes = await fetch('/api/admin/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadRes.ok) throw new Error('Ошибка загрузки изображения');
+
+                const uploadData = await uploadRes.json();
+                finalThumbnailUrl = uploadData.url;
+            }
+
+            const coursePayload = {
+                title: courseData.title,
+                softwareProduct: courseData.softwareProduct,
+                authors: courseData.authors,
+                description: courseData.description,
+                thumbnailUrl: finalThumbnailUrl,
+                isPublished: courseData.isPublished
+            };
+
+            const response = await fetch('/api/admin/courses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(coursePayload)
+            });
+
+            if (!response.ok) throw new Error('Ошибка сохранения курса в БД');
+
             setIsSaving(false);
             alert('Новый курс успешно создан!');
             router.push('/admin/dashboard/courses');
-        }, 800);
+
+        } catch (err) {
+            alert('Произошла ошибка при сохранении курса');
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -65,7 +113,7 @@ export default function NewCoursePage() {
                         <span className="material-symbols-outlined text-[20px]">
                             {isSaving ? 'autorenew' : 'add_circle'}
                         </span>
-                        {isSaving ? 'Создание...' : 'Создать курс'}
+                        {isSaving ? 'Сохранение...' : 'Создать курс'}
                     </button>
                 </div>
             </section>
@@ -137,7 +185,6 @@ export default function NewCoursePage() {
 
                 <div className="space-y-6">
 
-                    {/* Обложка */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
                         <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-3">Обложка курса</h3>
 
@@ -147,11 +194,11 @@ export default function NewCoursePage() {
                                 <div className="absolute inset-0 bg-slate-900/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-3 backdrop-blur-sm">
                                     <label className="px-4 py-2 bg-white text-slate-900 font-bold text-sm rounded-lg cursor-pointer hover:bg-slate-100 transition-colors shadow-sm">
                                         Заменить
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageSelection} />
                                     </label>
                                     <button
-                                        onClick={() => setPreviewImage(null)}
-                                        className="text-white text-sm font-semibold hover:text-red-400 transition-colors"
+                                        onClick={handleRemoveImage}
+                                        className="text-white text-sm font-semibold hover:text-red-400 transition-colors cursor-pointer"
                                     >
                                         Удалить обложку
                                     </button>
@@ -169,7 +216,7 @@ export default function NewCoursePage() {
                                     type="file"
                                     accept="image/png, image/jpeg, image/webp"
                                     className="hidden"
-                                    onChange={handleImageUpload}
+                                    onChange={handleImageSelection}
                                 />
                             </label>
                         )}
