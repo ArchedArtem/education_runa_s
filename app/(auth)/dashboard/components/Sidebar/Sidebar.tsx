@@ -2,10 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function Sidebar() {
+interface SidebarProps {
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+}
+
+export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
+
+    useEffect(() => {
+        setIsOpen(false);
+    }, [pathname, setIsOpen]);
 
     const handleLogout = async () => {
         const res = await fetch('/api/auth/logout', { method: 'POST' });
@@ -23,10 +33,14 @@ export default function Sidebar() {
     };
 
     return (
-        <aside className="fixed h-screen w-64 left-0 border-r border-slate-200 bg-white flex flex-col py-8 z-50">
-            <div className="px-6 mb-10">
+        <aside
+            className={`fixed inset-y-0 left-0 w-64 border-r border-slate-200 bg-white flex flex-col py-8 z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
+                isOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+        >
+            <div className="px-6 mb-10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-700 flex items-center justify-center text-white">
+                    <div className="w-10 h-10 rounded-lg bg-blue-700 flex items-center justify-center text-white shrink-0">
                         <span className="material-symbols-outlined text-2xl">school</span>
                     </div>
                     <div>
@@ -34,9 +48,15 @@ export default function Sidebar() {
                         <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Обучение</span>
                     </div>
                 </div>
+                <button
+                    onClick={() => setIsOpen(false)}
+                    className="md:hidden text-slate-400 hover:text-slate-900 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-2xl">close</span>
+                </button>
             </div>
 
-            <nav className="flex-1 px-4 space-y-1">
+            <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
                 <Link href="/dashboard" className={getLinkClass("/dashboard")}>
                     <span className="material-symbols-outlined">dashboard</span>
                     <span className="text-sm">Дашборд</span>
@@ -55,7 +75,7 @@ export default function Sidebar() {
                 </Link>
             </nav>
 
-            <div className="px-4 mt-auto">
+            <div className="px-4 mt-auto pt-4 border-t border-slate-100">
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 mb-4">
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Организация</p>
                     <p className="text-sm font-bold text-slate-900 truncate">ООО Альфа-Трейд</p>

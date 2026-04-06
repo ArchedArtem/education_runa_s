@@ -12,6 +12,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
     const [isChecking, setIsChecking] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const checkAdminAuth = async () => {
@@ -55,13 +56,21 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
     if (isAdmin) {
         return (
-            <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans text-slate-900 animate-in fade-in duration-500">
-                <AdminSidebar />
+            <div className="flex min-h-screen overflow-hidden bg-slate-50 font-sans text-slate-900 animate-in fade-in duration-500 relative">
 
-                <main className="flex-1 ml-64 min-h-screen flex flex-col relative">
-                    <AdminHeader />
+                {isMobileMenuOpen && (
+                    <div
+                        className="fixed inset-0 bg-slate-900/50 z-40 md:hidden transition-opacity backdrop-blur-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                )}
 
-                    <div className="flex-1">
+                <AdminSidebar isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
+
+                <main className="flex-1 md:ml-64 min-h-screen flex flex-col w-full min-w-0 relative">
+                    <AdminHeader setIsOpen={setIsMobileMenuOpen} />
+
+                    <div className="flex-1 overflow-x-hidden p-4 md:p-0">
                         {children}
                     </div>
 

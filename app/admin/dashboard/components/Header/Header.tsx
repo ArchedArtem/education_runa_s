@@ -1,20 +1,33 @@
 "use client";
 
-export default function AdminHeader() {
+interface AdminHeaderProps {
+    setIsOpen: (isOpen: boolean) => void;
+}
+
+export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
     return (
-        <header className="h-20 bg-white flex justify-between items-center w-full px-8 border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-            <div className="flex-1 max-w-xl">
-                <div className="relative group">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-700">search</span>
-                    <input
-                        type="text"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/10 transition-all duration-300"
-                        placeholder="Поиск по ID клиента, email или названию курса..."
-                    />
+        <header className="h-20 bg-white flex justify-between items-center w-full px-4 md:px-8 border-b border-slate-200 sticky top-0 z-30 shadow-sm gap-4">
+            <div className="flex items-center gap-4 flex-1">
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="md:hidden text-slate-500 hover:text-slate-900 p-1 flex-shrink-0"
+                >
+                    <span className="material-symbols-outlined text-3xl">menu</span>
+                </button>
+
+                <div className="flex-1 max-w-xl hidden sm:block">
+                    <div className="relative group">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-700">search</span>
+                        <input
+                            type="text"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/10 transition-all duration-300"
+                            placeholder="Поиск по ID клиента, email или названию курса..."
+                        />
+                    </div>
                 </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
                 <div className="hidden lg:flex flex-col items-end">
                     <span className="text-sm font-bold text-slate-900">Смирнов А.</span>
                     <span className="text-xs text-blue-700 font-semibold">Главный администратор</span>

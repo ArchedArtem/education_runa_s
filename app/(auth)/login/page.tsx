@@ -118,6 +118,14 @@ export default function LoginPage() {
 
             <section className={styles.rightSide}>
                 <div className="w-full max-w-md">
+
+                    <div className="md:hidden mb-8">
+                        <Link href="/" className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer">
+                            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                            <span className="text-sm font-bold">На главную</span>
+                        </Link>
+                    </div>
+
                     <div className="mb-10">
                         <h2 className="text-3xl font-bold text-slate-900 mb-2">Вход</h2>
                         <p className="text-slate-500 text-sm">Авторизуйтесь для продолжения обучения</p>
