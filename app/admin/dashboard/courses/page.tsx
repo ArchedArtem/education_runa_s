@@ -62,10 +62,10 @@ export default function AdminCoursesPage() {
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Курсы и Уроки</h1>
                     <p className="text-slate-500 font-medium mt-1">Управление образовательным контентом платформы.</p>
                 </div>
-                <button className="cursor-pointer px-5 py-2.5 bg-blue-700 text-white font-bold rounded-lg shadow-lg shadow-blue-700/20 hover:bg-blue-800 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2">
+                <Link href="/admin/dashboard/courses/new" className="cursor-pointer px-5 py-2.5 bg-blue-700 text-white font-bold rounded-lg shadow-lg shadow-blue-700/20 hover:bg-blue-800 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2">
                     <span className="material-symbols-outlined text-[20px]">add_circle</span>
                     Создать курс
-                </button>
+                </Link>
             </section>
 
             <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col lg:flex-row gap-4 justify-between items-center">
@@ -162,10 +162,11 @@ export default function AdminCoursesPage() {
                                     Уроки
                                 </Link>
 
-                                <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-100 transition-colors text-sm flex items-center justify-center gap-2 w-full md:w-auto">
+                                <Link href={`/admin/dashboard/courses/${course.id}/edit`}
+                                    className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-100 transition-colors text-sm flex items-center justify-center gap-2 w-full md:w-auto">
                                     <span className="material-symbols-outlined text-[18px]">edit</span>
                                     Изменить
-                                </button>
+                                </Link>
 
                                 <button className="px-4 py-2 bg-white border border-slate-200 text-red-600 font-semibold rounded-lg shadow-sm hover:bg-red-50 hover:border-red-200 transition-colors text-sm flex items-center justify-center gap-2 w-full md:w-auto">
                                     <span className="material-symbols-outlined text-[18px]">delete</span>

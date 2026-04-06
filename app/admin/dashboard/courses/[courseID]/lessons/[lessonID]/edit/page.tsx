@@ -338,6 +338,8 @@ export default function EditLessonPage() {
                                 <input
                                     type="number"
                                     value={testData.passingScore}
+                                    min={0}
+                                    max={100}
                                     onChange={e => setTestData({...testData, passingScore: Number(e.target.value)})}
                                     className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-center outline-none focus:border-amber-500"
                                 />
