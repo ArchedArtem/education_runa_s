@@ -1,4 +1,5 @@
 import styles from './HeroSection.module.scss';
+import Link from "next/link";
 
 export default function HeroSection() {
     return (
@@ -12,9 +13,9 @@ export default function HeroSection() {
                         Закрытая образовательная платформа для клиентов компании. Профессиональный рост и экспертные знания.
                     </p>
                 </div>
-                <button className={styles.startBtn}>
+                <Link href={'/dashboard'} className={styles.startBtn}>
                     Начать обучение
-                </button>
+                </Link>
             </div>
 
             <div className={styles.mockupWrapper}>
