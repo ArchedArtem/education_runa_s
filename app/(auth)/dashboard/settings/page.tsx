@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import styles from './settings.module.scss';
 import { useRouter } from "next/navigation";
+import styles from './settings.module.scss';
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -40,7 +40,7 @@ export default function SettingsPage() {
                     router.push('/login');
                 }
             } catch (error) {
-                console.error("Ошибка загрузки профиля", error);
+                console.error(error);
             } finally {
                 setIsLoading(false);
             }
@@ -93,41 +93,23 @@ export default function SettingsPage() {
 
     if (isLoading) {
         return (
-            <div className="p-10 space-y-8 max-w-[1600px] mx-auto w-full animate-pulse">
-                <div className="space-y-3">
-                    <div className="h-10 w-64 bg-slate-200 rounded-lg"></div>
-                    <div className="h-5 w-96 bg-slate-100 rounded-md"></div>
+            <div className={styles.loaderContainer}>
+                <div className={styles.loaderHeader}>
+                    <div className={styles.skeletonTitle}></div>
+                    <div className={styles.skeletonSubtitle}></div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className={styles.formGrid}>
                     {[1, 2].map((i) => (
-                        <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 flex flex-col space-y-8">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-50">
-                                <div className="w-7 h-7 bg-slate-200 rounded-md"></div>
-                                <div className="h-6 w-48 bg-slate-200 rounded-md"></div>
-                            </div>
-
-                            <div className="space-y-6 flex-1">
-                                <div className="grid grid-cols-2 gap-5">
-                                    <div className="space-y-2">
-                                        <div className="h-3 w-12 bg-slate-200 rounded"></div>
-                                        <div className="h-10 w-full bg-slate-100 rounded-lg"></div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="h-3 w-16 bg-slate-200 rounded"></div>
-                                        <div className="h-10 w-full bg-slate-100 rounded-lg"></div>
-                                    </div>
+                        <div key={i} className={styles.skeletonCard}>
+                            <div className={styles.skeletonCardHeader}></div>
+                            <div className={styles.skeletonForm}>
+                                <div className={styles.skeletonRow}>
+                                    <div className={styles.skeletonInput}></div>
+                                    <div className={styles.skeletonInput}></div>
                                 </div>
-
-                                <div className="space-y-2">
-                                    <div className="h-3 w-24 bg-slate-200 rounded"></div>
-                                    <div className="h-10 w-full bg-slate-100 rounded-lg"></div>
-                                </div>
-
-                                <div className="space-y-2 pt-2">
-                                    <div className="h-3 w-20 bg-slate-200 rounded"></div>
-                                    <div className="h-10 w-full bg-slate-100 rounded-lg"></div>
-                                </div>
+                                <div className={styles.skeletonInputFull}></div>
+                                <div className={styles.skeletonInputFull}></div>
                             </div>
                         </div>
                     ))}
@@ -137,25 +119,23 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="p-10 space-y-8 max-w-[1600px] mx-auto w-full">
-
-            <section className="space-y-2">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900">Настройки профиля</h1>
-                <p className="text-lg text-slate-500 font-medium">Управление личными данными и безопасностью аккаунта.</p>
+        <div className={styles.pageContainer}>
+            <section className={styles.pageHeader}>
+                <h1 className={styles.title}>Настройки профиля</h1>
+                <p className={styles.subtitle}>Управление личными данными и безопасностью аккаунта.</p>
             </section>
 
-            <section className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-
-                <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-8 flex flex-col ${styles.glassCard}`}>
-                    <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
-                        <span className="material-symbols-outlined text-blue-700">badge</span>
-                        <h2 className="text-xl font-bold text-slate-900">Личная информация</h2>
+            <section className={styles.formGrid}>
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <span className="material-symbols-outlined">badge</span>
+                        <h2 className={styles.cardTitle}>Личная информация</h2>
                     </div>
 
-                    <form className="space-y-5 flex-1" onSubmit={(e) => e.preventDefault()}>
-                        <div className="grid grid-cols-2 gap-5">
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Имя</label>
+                    <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+                        <div className={styles.inputRow}>
+                            <div className={styles.fieldGroup}>
+                                <label className={styles.label}>Имя</label>
                                 <input
                                     type="text"
                                     name="firstName"
@@ -164,8 +144,8 @@ export default function SettingsPage() {
                                     className={styles.inputField}
                                 />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Фамилия</label>
+                            <div className={styles.fieldGroup}>
+                                <label className={styles.label}>Фамилия</label>
                                 <input
                                     type="text"
                                     name="lastName"
@@ -176,64 +156,58 @@ export default function SettingsPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Рабочий Email</label>
-                            <div className="relative">
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={personalInfo.email}
-                                    onChange={handlePersonalInfoChange}
-                                    className={`${styles.inputField} pl-10`}
-                                    style={{ paddingLeft: '1rem' }}
-                                />
-                            </div>
+                        <div className={styles.fieldGroup}>
+                            <label className={styles.label}>Рабочий Email</label>
+                            <input
+                                type="email"
+                                name="email"
+                                value={personalInfo.email}
+                                onChange={handlePersonalInfoChange}
+                                className={styles.inputField}
+                            />
                         </div>
 
-                        <div className="space-y-1.5 pt-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <div className={styles.fieldGroup}>
+                            <label className={styles.label}>
                                 Организация
-                                <span className="material-symbols-outlined text-[14px] text-slate-400">info</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>info</span>
                             </label>
-                            <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">domain</span>
+                            <div className={styles.relativeWrapper}>
+                                <span className={`material-symbols-outlined ${styles.inputIconLeft}`}>domain</span>
                                 <input
                                     type="text"
                                     value={personalInfo.companyName}
                                     disabled
-                                    className="w-full pl-10 pr-10 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed text-sm font-medium"
+                                    className={styles.inputDisabled}
                                 />
-                                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">lock</span>
+                                <span className={`material-symbols-outlined ${styles.inputIconRight}`}>lock</span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-1">Для изменения организации обратитесь в службу поддержки.</p>
+                            <p className={styles.hintText}>Для изменения организации обратитесь в службу поддержки.</p>
                         </div>
                     </form>
                 </div>
 
-                <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-8 flex flex-col ${styles.glassCard}`}>
-                    <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
-                        <span className="material-symbols-outlined text-blue-700">shield_lock</span>
-                        <h2 className="text-xl font-bold text-slate-900">Безопасность</h2>
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <span className="material-symbols-outlined">shield_lock</span>
+                        <h2 className={styles.cardTitle}>Безопасность</h2>
                     </div>
 
-                    <form className="space-y-5 flex-1" onSubmit={(e) => e.preventDefault()}>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Текущий пароль</label>
-                            <div className="relative">
-                                <input
-                                    type="password"
-                                    name="current"
-                                    placeholder="••••••••••••"
-                                    value={passwords.current}
-                                    onChange={handlePasswordChange}
-                                    className={`${styles.inputField} pl-10`}
-                                    style={{ paddingLeft: '1rem' }}
-                                />
-                            </div>
+                    <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+                        <div className={styles.fieldGroup}>
+                            <label className={styles.label}>Текущий пароль</label>
+                            <input
+                                type="password"
+                                name="current"
+                                placeholder="••••••••••••"
+                                value={passwords.current}
+                                onChange={handlePasswordChange}
+                                className={styles.inputField}
+                            />
                         </div>
 
-                        <div className="space-y-1.5 pt-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Новый пароль</label>
+                        <div className={styles.fieldGroup}>
+                            <label className={styles.label}>Новый пароль</label>
                             <input
                                 type="password"
                                 name="new"
@@ -244,8 +218,8 @@ export default function SettingsPage() {
                             />
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Повторите новый пароль</label>
+                        <div className={styles.fieldGroup}>
+                            <label className={styles.label}>Повторите новый пароль</label>
                             <input
                                 type="password"
                                 name="confirm"
@@ -259,20 +233,20 @@ export default function SettingsPage() {
                 </div>
             </section>
 
-            <section className="pt-6 border-t border-slate-200 flex justify-end gap-4 mt-8">
+            <section className={styles.footerActions}>
                 <button
                     type="button"
                     onClick={() => router.back()}
-                    className="cursor-pointer px-6 py-2.5 rounded-lg font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 transition-all text-sm"
+                    className={styles.btnCancel}
                 >
                     Отмена
                 </button>
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="cursor-pointer px-6 py-2.5 rounded-lg font-semibold text-white bg-blue-700 hover:bg-blue-800 shadow-lg shadow-blue-700/20 hover:-translate-y-0.5 transition-all active:scale-95 text-sm flex items-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0"
+                    className={styles.btnSave}
                 >
-                    <span className="material-symbols-outlined text-[18px]">
+                    <span className="material-symbols-outlined">
                         {isSaving ? 'autorenew' : 'save'}
                     </span>
                     {isSaving ? 'Сохранение...' : 'Сохранить изменения'}

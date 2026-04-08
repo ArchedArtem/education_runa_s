@@ -1,44 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import Sidebar from "@/app/(auth)/dashboard/components/Sidebar/Sidebar";
-// import Header from "@/app/(auth)/dashboard/components/Header/Header";
 import Footer from "@/app/(auth)/dashboard/components/Footer/Footer";
 import styles from './page.module.scss';
 
+const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const error = new Error('Not authorized');
+        (error as any).info = errorData;
+        (error as any).status = res.status;
+        throw error;
+    }
+    return res.json();
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    const pathname = usePathname();
-    const [isChecking, setIsChecking] = useState(true);
-    const [isBlocked, setIsBlocked] = useState(false);
-
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const res = await fetch('/api/auth/me');
+    const { error, isLoading } = useSWR('/api/auth/me', fetcher, {
+        refreshInterval: 120000,
+        revalidateOnFocus: true,
+        shouldRetryOnError: false
+    });
 
-                if (res.ok) {
-                    setIsChecking(false);
-                } else if (res.status === 403) {
-                    const data = await res.json();
-                    if (data.is_block) {
-                        setIsBlocked(true);
-                        setIsChecking(false);
-                    } else {
-                        router.push('/login');
-                    }
-                } else {
-                    router.push('/login');
-                }
-            } catch (error) {
-                router.push('/login');
-            }
-        };
-        checkAuth();
-    }, [router, pathname]);
+    const isBlocked = error?.status === 403 && error?.info?.is_block;
+
+    if (error && !isBlocked) {
+        router.push('/login');
+        return null;
+    }
 
     if (isBlocked) {
         return (
@@ -63,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 try {
                                     await fetch('/api/auth/logout', { method: 'POST' });
                                 } catch (e) {
-                                    console.error("Ошибка при выходе:", e);
+
                                 } finally {
                                     router.push('/login');
                                 }
@@ -79,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
-    if (isChecking) {
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-6 font-sans">
                 <div className="relative flex items-center justify-center w-24 h-24">
@@ -129,8 +125,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <span className="material-symbols-outlined text-3xl">menu</span>
                     </button>
                 </div>
-
-                {/* <Header /> */}
 
                 <div className="flex-1 p-4 md:p-0">
                     {children}

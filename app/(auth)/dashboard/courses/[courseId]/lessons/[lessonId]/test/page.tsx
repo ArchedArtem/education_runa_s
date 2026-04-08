@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import styles from './test.module.scss';
 
 const COURSE_ID = 'c-1';
 const LESSON_ID = 'l-3';
@@ -109,36 +110,36 @@ export default function TestPage() {
         const isPassed = result >= TEST_DATA.passingScore;
 
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
-                <div className="max-w-md w-full bg-white rounded-3xl p-10 shadow-xl border border-slate-100 text-center space-y-6">
-                    <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center ${isPassed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                        <span className="material-symbols-outlined text-5xl">
+            <div className={styles.resultPage}>
+                <div className={styles.resultCard}>
+                    <div className={`${styles.resultIcon} ${isPassed ? styles.iconSuccess : styles.iconFail}`}>
+                        <span className="material-symbols-outlined">
                             {isPassed ? 'workspace_premium' : 'cancel'}
                         </span>
                     </div>
 
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                    <div className={styles.resultText}>
+                        <h2 className={styles.resultTitle}>
                             {isPassed ? 'Тест успешно сдан!' : 'Тест не пройден'}
                         </h2>
-                        <p className="text-slate-500">
-                            Вы набрали <span className="font-bold text-slate-900">{result}%</span> правильных ответов.
+                        <p className={styles.resultDescription}>
+                            Вы набрали <span className={styles.scoreHighlight}>{result}%</span> правильных ответов.
                             Проходной балл: {TEST_DATA.passingScore}%.
                         </p>
                     </div>
 
-                    <div className="pt-4 space-y-3">
+                    <div className={styles.resultActions}>
                         {!isPassed && (
                             <button
                                 onClick={() => { setIsFinished(false); setCurrentStep(0); setAnswers({}); }}
-                                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all"
+                                className={styles.btnRetry}
                             >
                                 Попробовать снова
                             </button>
                         )}
                         <button
                             onClick={exitTest}
-                            className={`w-full h-12 font-bold rounded-xl transition-all ${isPassed ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                            className={isPassed ? styles.btnRetry : styles.btnBack}
                         >
                             Вернуться к уроку
                         </button>
@@ -149,39 +150,39 @@ export default function TestPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-            <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10">
-                <div className="flex items-center gap-4">
-                    <button onClick={exitTest} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer">
+        <div className={styles.testPage}>
+            <header className={styles.testHeader}>
+                <div className={styles.headerLeft}>
+                    <button onClick={exitTest} className={styles.btnClose}>
                         <span className="material-symbols-outlined">close</span>
                     </button>
-                    <span className="font-bold text-slate-900 truncate max-w-xs md:max-w-md">{TEST_DATA.title}</span>
+                    <span className={styles.testTitle}>{TEST_DATA.title}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-400">
+                <div className={styles.headerRight}>
                     Вопрос {currentStep + 1} из {totalQuestions}
                 </div>
             </header>
 
-            <div className="h-1 w-full bg-slate-200">
+            <div className={styles.progressContainer}>
                 <div
-                    className="h-full bg-blue-600 transition-all duration-300 ease-out"
+                    className={styles.progressBar}
                     style={{ width: `${progress}%` }}
                 />
             </div>
 
-            <main className="flex-1 flex flex-col items-center justify-center p-6 py-12">
-                <div className="max-w-3xl w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500" key={question.id}>
+            <main className={styles.testMain}>
+                <div className={styles.questionContainer} key={question.id}>
 
-                    <div className="space-y-4">
-                        <span className="inline-block px-3 py-1 bg-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-md">
+                    <div className={styles.questionHeader}>
+                        <span className={styles.typeBadge}>
                             {question.type === 'single' ? 'Один вариант' : 'Несколько вариантов'}
                         </span>
-                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 leading-snug">
+                        <h1 className={styles.questionText}>
                             {question.text}
                         </h1>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className={styles.optionsList}>
                         {question.options.map((option) => {
                             const isSelected = (answers[question.id] || []).includes(option.id);
 
@@ -189,20 +190,12 @@ export default function TestPage() {
                                 <button
                                     key={option.id}
                                     onClick={() => handleOptionToggle(option.id)}
-                                    className={`w-full text-left p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${
-                                        isSelected
-                                            ? 'border-blue-600 bg-blue-50/50'
-                                            : 'border-slate-200 bg-white hover:border-blue-300'
-                                    }`}
+                                    className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''}`}
                                 >
-                                    <div className={`w-6 h-6 shrink-0 flex items-center justify-center border-2 transition-colors ${
-                                        question.type === 'single' ? 'rounded-full' : 'rounded-md'
-                                    } ${
-                                        isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300'
-                                    }`}>
-                                        {isSelected && <span className="material-symbols-outlined text-[16px] font-bold">check</span>}
+                                    <div className={`${styles.checkControl} ${question.type === 'single' ? styles.round : styles.square} ${isSelected ? styles.checked : ''}`}>
+                                        {isSelected && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
                                     </div>
-                                    <span className={`text-base font-medium ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                                    <span className={styles.optionLabel}>
                                         {option.text}
                                     </span>
                                 </button>
@@ -210,14 +203,14 @@ export default function TestPage() {
                         })}
                     </div>
 
-                    <div className="pt-6 flex justify-end">
+                    <div className={styles.footerActions}>
                         <button
                             onClick={handleNext}
                             disabled={!(answers[question.id] && answers[question.id].length > 0)}
-                            className="h-12 px-8 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-slate-900 text-white font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+                            className={styles.btnNext}
                         >
                             {currentStep === totalQuestions - 1 ? 'Завершить тест' : 'Следующий вопрос'}
-                            <span className="material-symbols-outlined text-[20px]">
+                            <span className="material-symbols-outlined">
                                 {currentStep === totalQuestions - 1 ? 'flag' : 'arrow_forward'}
                             </span>
                         </button>

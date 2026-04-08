@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -12,10 +12,25 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         setIsOpen(false);
     }, [pathname, setIsOpen]);
+
+    useEffect(() => {
+        const checkAdminStatus = async () => {
+            try {
+                const res = await fetch('/api/admin/auth/me');
+                if (res.ok) {
+                    setIsAdmin(true);
+                }
+            } catch (error) {
+                setIsAdmin(false);
+            }
+        };
+        checkAdminStatus();
+    }, []);
 
     const handleLogout = async () => {
         const res = await fetch('/api/auth/logout', { method: 'POST' });
@@ -76,13 +91,23 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </nav>
 
             <div className="px-4 mt-auto pt-4 border-t border-slate-100">
+                {isAdmin && (
+                    <Link
+                        href="/admin/dashboard"
+                        className="mb-4 w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all duration-200 shadow-md shadow-slate-900/10"
+                    >
+                        <span className="material-symbols-outlined">admin_panel_settings</span>
+                        <span className="text-sm font-bold">В админ-панель</span>
+                    </Link>
+                )}
+
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 mb-4">
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Организация</p>
                     <p className="text-sm font-bold text-slate-900 truncate">ООО Альфа-Трейд</p>
                 </div>
                 <button onClick={handleLogout} className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200">
                     <span className="material-symbols-outlined">logout</span>
-                    <span className="text-sm">Выйти</span>
+                    <span className="text-sm font-medium">Выйти</span>
                 </button>
             </div>
         </aside>

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from "next/navigation";
 import styles from './lesson.module.scss';
-import {useRouter} from "next/navigation";
 
 const COURSE_INFO = {
     id: 'c-1',
@@ -51,112 +51,103 @@ export default function LessonPage() {
     };
 
     return (
-        <div className="p-6 lg:p-10 max-w-[1600px] mx-auto w-full font-sans space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8 space-y-8">
+        <div className={styles.pageContainer}>
+            <div className={styles.layoutGrid}>
+
+                <div className={styles.contentCol}>
                     {LESSON_DATA.videoUrl && (
                         <section className={styles.videoContainer}>
-                            <video controls src={LESSON_DATA.videoUrl} className="w-full h-full" />
+                            <video controls src={LESSON_DATA.videoUrl} />
                         </section>
                     )}
 
-                    <section className="flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-slate-200 pb-8">
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                    <section className={styles.lessonHeader}>
+                        <h1 className={styles.lessonTitle}>
                             {LESSON_DATA.title}
                         </h1>
 
-                        <div className="flex items-center gap-3 shrink-0">
+                        <div className={styles.actionGroup}>
                             <button
                                 onClick={handleActionClick}
-                                className={`cursor-pointer h-11 px-5 text-sm font-bold rounded-lg transition-all flex items-center gap-2 border ${
+                                className={`${styles.btnAction} ${
                                     LESSON_DATA.hasTest
-                                        ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-                                        : isCompleted
-                                            ? 'bg-green-50 border-green-200 text-green-700'
-                                            : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                                        ? styles.btnTest
+                                        : isCompleted ? styles.btnCompleted : styles.btnNotCompleted
                                 }`}
                             >
-                                <span className="material-symbols-outlined text-[20px]">
+                                <span className="material-symbols-outlined">
                                     {LESSON_DATA.hasTest ? 'quiz' : isCompleted ? 'check_circle' : 'radio_button_unchecked'}
                                 </span>
                                 {LESSON_DATA.hasTest ? 'Пройти тест' : isCompleted ? 'Пройдено' : 'Завершить'}
                             </button>
 
-                            <button className="cursor-pointer h-11 px-5 bg-blue-700 hover:bg-blue-800 text-white text-sm font-bold rounded-lg shadow-sm flex items-center gap-2">
+                            <button className={`${styles.btnAction} ${styles.btnNext}`}>
                                 Далее
-                                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                                <span className="material-symbols-outlined">arrow_forward</span>
                             </button>
                         </div>
                     </section>
 
                     {LESSON_DATA.content && (
-                        <section className="space-y-4">
-                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px]">description</span>
+                        <section>
+                            <h2 className={styles.sectionLabel}>
+                                <span className="material-symbols-outlined">description</span>
                                 Конспект урока
                             </h2>
                             <div
-                                className={`${styles.textContent} bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-sm`}
+                                className={styles.textContent}
                                 dangerouslySetInnerHTML={{ __html: LESSON_DATA.content }}
                             />
                         </section>
                     )}
                 </div>
 
-                <div className="lg:col-span-4">
-                    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px] lg:h-[calc(100vh-120px)] sticky top-6">
-                        <div className="flex border-b border-slate-100 bg-slate-50/50 p-2">
+                <div className={styles.sidebarCol}>
+                    <div className={styles.sidebarCard}>
+                        <div className={styles.sidebarTabs}>
                             <button
                                 onClick={() => setActiveTab('playlist')}
-                                className={`cursor-pointer flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-                                    activeTab === 'playlist' ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60' : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                                className={`${styles.tabBtn} ${activeTab === 'playlist' ? styles.tabBtnActive : ''}`}
                             >
                                 Содержание
                             </button>
                             <button
                                 onClick={() => setActiveTab('materials')}
-                                className={`cursor-pointer flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-                                    activeTab === 'materials' ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60' : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                                className={`${styles.tabBtn} ${activeTab === 'materials' ? styles.tabBtnActive : ''}`}
                             >
                                 Файлы ({ATTACHMENTS.length})
                             </button>
                         </div>
 
                         {activeTab === 'playlist' && (
-                            <div className={`flex-1 overflow-y-auto p-4 space-y-2 ${styles.sidebarScroll}`}>
+                            <div className={styles.sidebarScroll}>
                                 {PLAYLIST.map((lesson, index) => (
                                     <Link
                                         href={`/dashboard/courses/${COURSE_INFO.id}/lessons/${lesson.id}`}
                                         key={lesson.id}
-                                        className={`group flex gap-4 p-3 rounded-xl border transition-all ${
-                                            lesson.isCurrent
-                                                ? 'bg-blue-50/50 border-blue-200'
-                                                : 'bg-white border-transparent hover:border-slate-200'
-                                        }`}
+                                        className={`${styles.playlistItem} ${lesson.isCurrent ? styles.playlistItemCurrent : ''}`}
                                     >
-                                        <div className="flex flex-col items-center mt-0.5 shrink-0">
+                                        <div className={styles.statusIcon}>
                                             {lesson.isCompleted ? (
-                                                <span className="material-symbols-outlined text-green-500 text-[20px]">check_circle</span>
+                                                <span className={`material-symbols-outlined ${styles.iconCheck}`}>check_circle</span>
                                             ) : lesson.isCurrent ? (
-                                                <span className="material-symbols-outlined text-blue-600 text-[20px]">play_circle</span>
+                                                <span className={`material-symbols-outlined ${styles.iconPlay}`}>play_circle</span>
                                             ) : (
-                                                <span className="text-xs font-bold text-slate-300 w-5 text-center">{index + 1}</span>
+                                                <span className={styles.iconIndex}>{index + 1}</span>
                                             )}
                                         </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className={`text-sm font-semibold line-clamp-2 ${lesson.isCurrent ? 'text-blue-900' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                                        <div className={styles.playlistText}>
+                                            <span className={`${styles.playlistTitle} ${lesson.isCurrent ? styles.titleCurrent : styles.titleOther}`}>
                                                 {lesson.title}
                                             </span>
-                                            <div className="flex items-center gap-3 text-xs text-slate-400">
-                                                <span className="flex items-center gap-1">
-                                                    <span className="material-symbols-outlined text-[14px]">schedule</span>
+                                            <div className={styles.playlistMeta}>
+                                                <span className={styles.metaItem}>
+                                                    <span className="material-symbols-outlined">schedule</span>
                                                     {lesson.duration}
                                                 </span>
                                                 {lesson.hasTest && (
-                                                    <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                                                        <span className="material-symbols-outlined text-[12px]">quiz</span>
+                                                    <span className={styles.badgeTest}>
+                                                        <span className="material-symbols-outlined">quiz</span>
                                                         Тест
                                                     </span>
                                                 )}
@@ -168,30 +159,30 @@ export default function LessonPage() {
                         )}
 
                         {activeTab === 'materials' && (
-                            <div className={`flex-1 overflow-y-auto p-4 space-y-3 ${styles.sidebarScroll}`}>
+                            <div className={styles.sidebarScroll}>
                                 {ATTACHMENTS.length > 0 ? (
                                     ATTACHMENTS.map(file => (
                                         <a
                                             href="#"
                                             key={file.id}
-                                            className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-300 transition-all group"
+                                            className={styles.materialItem}
                                         >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                                            <div className={styles.fileInfo}>
+                                                <div className={styles.fileIconBox}>
                                                     <span className="material-symbols-outlined">{file.icon}</span>
                                                 </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-sm font-bold text-slate-900 truncate">{file.name}</span>
-                                                    <span className="text-[10px] font-medium text-slate-400 uppercase">{file.size}</span>
+                                                <div className={styles.fileText}>
+                                                    <span className={styles.fileName}>{file.name}</span>
+                                                    <span className={styles.fileSize}>{file.size}</span>
                                                 </div>
                                             </div>
-                                            <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-600">download</span>
+                                            <span className={`material-symbols-outlined ${styles.downloadIcon}`}>download</span>
                                         </a>
                                     ))
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                                        <span className="material-symbols-outlined text-4xl mb-2 opacity-50">folder_off</span>
-                                        <span className="text-sm">К этому уроку нет файлов</span>
+                                    <div className={styles.emptyState}>
+                                        <span className="material-symbols-outlined">folder_off</span>
+                                        <p>К этому уроку нет файлов</p>
                                     </div>
                                 )}
                             </div>

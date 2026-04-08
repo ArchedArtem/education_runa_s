@@ -4,163 +4,139 @@ import Link from "next/link";
 import styles from './page.module.scss';
 
 export default function Dashboard() {
-
     return (
-        <div className="p-10 space-y-10 max-w-[1600px] mx-auto w-full">
-
-            <section className="space-y-2">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900">С возвращением, Иван!</h1>
-                <p className="text-lg text-slate-500 font-medium">Ваш прогресс обучения и результаты на сегодня.</p>
+        <div className={styles.pageWrapper}>
+            <section className={styles.welcomeSection}>
+                <h1 className={styles.mainTitle}>С возвращением, Иван!</h1>
+                <p className={styles.mainSubtitle}>Ваш прогресс обучения и результаты на сегодня.</p>
             </section>
 
-            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <div
-                    className={`lg:col-span-2 ${styles.glassCard} rounded-xl p-8 flex flex-col justify-between shadow-xl shadow-blue-900/5 relative overflow-hidden group border border-white/60`}>
-                    <div className="absolute top-0 right-0 p-8">
-                        <span
-                            className="material-symbols-outlined text-6xl text-blue-700/10 transition-transform duration-500 group-hover:scale-110">account_balance</span>
+            <section className={styles.mainProgressGrid}>
+                <div className={styles.featuredCard}>
+                    <div className={styles.floatingIcon}>
+                        <span className="material-symbols-outlined">account_balance</span>
                     </div>
 
-                    <div className="relative z-10 space-y-6">
-                        <div className="space-y-1">
-                            <span
-                                className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase tracking-wider">1С:Бухгалтерия</span>
-                            <h3 className="text-2xl font-bold mt-2 text-slate-900">1С:Бухгалтерия предприятия 8.3</h3>
-                            <p className="text-slate-500 text-sm">Основы ведения учета, налогообложение и отчетность для
-                                малого бизнеса.</p>
+                    <div className={styles.featuredContent}>
+                        <div className={styles.featuredHeader}>
+                            <span className={styles.tagYellow}>1С:Бухгалтерия</span>
+                            <h3 className={styles.cardTitleLarge}>1С:Бухгалтерия предприятия 8.3</h3>
+                            <p className={styles.cardDescription}>
+                                Основы ведения учета, налогообложение и отчетность для малого бизнеса.
+                            </p>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-end">
-                                <span className="text-sm font-semibold text-slate-600">Прогресс обучения</span>
-                                <span className="text-2xl font-bold text-blue-700">65%</span>
+                        <div className={styles.progressBlock}>
+                            <div className={styles.progressInfo}>
+                                <span className={styles.progressLabel}>Прогресс обучения</span>
+                                <span className={styles.progressValue}>65%</span>
                             </div>
-                            <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-gradient-to-r from-blue-600 to-blue-400 w-[65%] rounded-full shadow-[0_0_12px_rgba(29,78,216,0.4)]"></div>
+                            <div className={styles.barContainer}>
+                                <div className={styles.barFillLarge} style={{ width: '65%' }}></div>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 text-sm">
-                                <span className="material-symbols-outlined text-sm text-green-500">check_circle</span>
+                            <div className={styles.progressFooter}>
+                                <span className={`material-symbols-outlined ${styles.iconSuccess}`}>check_circle</span>
                                 <span>Пройдено 12 из 18 уроков</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-8 relative z-10">
-                        <button
-                            className="px-8 py-3 bg-gradient-to-br from-blue-700 to-blue-500 text-white font-semibold rounded-lg shadow-lg shadow-blue-600/30 hover:-translate-y-0.5 transition-all active:scale-95 flex items-center gap-2">
+                    <div className={styles.featuredActions}>
+                        <button className={styles.btnFeatured}>
                             <span>Продолжить</span>
-                            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                            <span className="material-symbols-outlined">arrow_forward</span>
                         </button>
                     </div>
                 </div>
 
-                <div
-                    className="bg-white rounded-xl p-8 flex flex-col justify-between shadow-lg shadow-slate-200/50 border border-slate-100 group">
-                    <div className="space-y-6">
-                        <div
-                            className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700 group-hover:bg-blue-700 group-hover:text-white transition-colors duration-300">
+                <div className={styles.compactProgressCard}>
+                    <div className={styles.cardInternal}>
+                        <div className={styles.iconBoxBlue}>
                             <span className="material-symbols-outlined">groups</span>
                         </div>
-                        <div className="space-y-1">
-                            <h3 className="text-xl font-bold text-slate-900 leading-tight">1С:ЗУП 8 Корпоративная</h3>
-                            <p className="text-slate-500 text-sm leading-relaxed">Управление персоналом и расчет
-                                заработной платы.</p>
+                        <div className={styles.compactText}>
+                            <h3 className={styles.cardTitle}>1С:ЗУП 8 Корпоративная</h3>
+                            <p className={styles.cardDescription}>Управление персоналом и расчет заработной платы.</p>
                         </div>
-                        <div className="space-y-2">
-                            <div
-                                className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        <div className={styles.compactProgress}>
+                            <div className={styles.progressHeaderMini}>
                                 <span>Прогресс</span>
                                 <span>20%</span>
                             </div>
-                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-700/40 w-[20%] rounded-full"></div>
+                            <div className={styles.barContainerMini}>
+                                <div className={styles.barFillMini} style={{ width: '20%' }}></div>
                             </div>
-                            <p className="text-xs font-medium text-slate-500">Пройдено 2 из 10 уроков</p>
+                            <p className={styles.progressSubtext}>Пройдено 2 из 10 уроков</p>
                         </div>
                     </div>
-                    <button
-                        className="mt-8 w-full py-3 border-2 border-slate-100 text-blue-700 font-bold rounded-lg hover:bg-slate-50 hover:border-blue-200 transition-all text-sm">
+                    <button className={styles.btnOutline}>
                         Продолжить курс
                     </button>
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="text-lg font-bold flex items-center gap-2 text-slate-900">
-                            <span className="material-symbols-outlined text-green-500">verified</span>
+            <section className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                    <div className={styles.statHeader}>
+                        <h3 className={styles.statTitle}>
+                            <span className={`material-symbols-outlined ${styles.iconSuccess}`}>verified</span>
                             Завершенные курсы
                         </h3>
-                        <span
-                            className="text-xs font-bold px-2 py-1 bg-green-50 text-green-700 rounded-md">Всего: 1</span>
+                        <span className={styles.statBadgeGreen}>Всего: 1</span>
                     </div>
 
-                    <div className="p-6">
-                        <div
-                            className="flex items-center justify-between p-4 bg-slate-50 rounded-xl group hover:bg-slate-100 transition-colors">
-                            <div className="flex items-center gap-4">
-                                <div
-                                    className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                    <span className="material-symbols-outlined text-blue-700">shopping_cart</span>
+                    <div className={styles.statBody}>
+                        <div className={styles.listItem}>
+                            <div className={styles.listItemMain}>
+                                <div className={styles.listItemIcon}>
+                                    <span className="material-symbols-outlined">shopping_cart</span>
                                 </div>
                                 <div>
-                                    <p className="font-bold text-slate-900">1С:Управление торговлей</p>
-                                    <p className="text-xs text-slate-500">Завершено 14 мая 2026</p>
+                                    <p className={styles.itemTitle}>1С:Управление торговлей</p>
+                                    <p className={styles.itemSubtitle}>Завершено 14 мая 2026</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className="w-6 h-6 rounded-full bg-blue-700 flex items-center justify-center text-[10px] text-white font-bold">100
-                                </div>
-                                <span className="material-symbols-outlined text-green-500 font-bold">check</span>
+                            <div className={styles.listItemResult}>
+                                <div className={styles.scoreCircle}>100</div>
+                                <span className={`material-symbols-outlined ${styles.iconSuccess}`}>check</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-auto p-6 pt-0">
-                        <Link href="/certificates"
-                              className="text-sm font-bold text-blue-700 hover:underline flex items-center gap-1 w-max">
+                    <div className={styles.statFooter}>
+                        <Link href="/certificates" className={styles.footerLink}>
                             Посмотреть сертификаты
-                            <span className="material-symbols-outlined text-xs">open_in_new</span>
+                            <span className="material-symbols-outlined">open_in_new</span>
                         </Link>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="text-lg font-bold flex items-center gap-2 text-slate-900">
-                            <span className="material-symbols-outlined text-blue-700">history</span>
+                <div className={styles.statCard}>
+                    <div className={styles.statHeader}>
+                        <h3 className={styles.statTitle}>
+                            <span className={`material-symbols-outlined ${styles.iconBlue}`}>history</span>
                             История тестирования
                         </h3>
-                        <Link href="/dashboard/tests"
-                              className="text-xs font-bold text-slate-400 hover:text-blue-700 transition-colors">
+                        <Link href="/dashboard/tests" className={styles.viewAllLink}>
                             СМОТРЕТЬ ВСЕ
                         </Link>
                     </div>
 
-                    <div className="p-6 space-y-4">
-                        <div
-                            className="flex items-center gap-4 p-4 border border-slate-100 rounded-xl hover:border-blue-200 transition-colors">
-                            <div className="flex-1">
-                                <div className="flex justify-between mb-1">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Итоговый тест</span>
-                                    <span className="text-xs font-bold text-blue-700">Отлично</span>
+                    <div className={styles.statBody}>
+                        <div className={styles.historyItem}>
+                            <div className={styles.historyHeader}>
+                                <span className={styles.historyTag}>Итоговый тест</span>
+                                <span className={styles.historyGrade}>Отлично</span>
+                            </div>
+                            <p className={styles.itemTitle}>1С:Бухгалтерия (Модуль 1-4)</p>
+                            <div className={styles.historyFooter}>
+                                <div className={styles.historyMeta}>
+                                    <span className={styles.certifiedTag}>Сертифицирован</span>
+                                    <span className={styles.dateText}>12 Июня</span>
                                 </div>
-                                <p className="font-bold text-slate-900">1С:Бухгалтерия (Модуль 1-4)</p>
-                                <div className="mt-3 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded uppercase">Сертифицирован</span>
-                                        <span className="text-xs text-slate-400">12 Июня</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-xl font-black text-slate-900 tracking-tighter">95</span>
-                                        <span className="text-xs font-bold text-slate-400">/100</span>
-                                    </div>
+                                <div className={styles.scoreDisplay}>
+                                    <span className={styles.scoreBig}>95</span>
+                                    <span className={styles.scoreSmall}>/100</span>
                                 </div>
                             </div>
                         </div>
