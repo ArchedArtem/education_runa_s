@@ -54,7 +54,14 @@ export default function AdminLessonsPage() {
 
                 if (!res.ok) throw new Error('Ошибка при удалении урока');
 
-                setLessons(prevLessons => prevLessons.filter(l => l.id !== lessonId));
+                const lessonToDelete = lessons.find(l => l.id === lessonId);
+                if (lessonToDelete) {
+                    setLessons(prev =>
+                        prev
+                            .filter(l => l.id !== lessonId)
+                            .map(l => l.order > lessonToDelete.order ? { ...l, order: l.order - 1 } : l)
+                    );
+                }
 
             } catch (error) {
                 alert('Не удалось удалить урок. Проверьте консоль.');

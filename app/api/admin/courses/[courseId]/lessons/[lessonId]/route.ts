@@ -116,16 +116,40 @@ export async function DELETE(
     try {
         const resolvedParams = await params;
         const lessonId = parseInt(resolvedParams.lessonId, 10);
+        const courseId = parseInt(resolvedParams.courseId, 10);
 
-        if (isNaN(lessonId)) {
-            return NextResponse.json({ error: 'Неверный ID урока' }, { status: 400 });
+        if (isNaN(lessonId) || isNaN(courseId)) {
+            return NextResponse.json({ error: 'Неверные ID' }, { status: 400 });
         }
 
-        await prisma.lesson.delete({
-            where: { id: lessonId }
+        await prisma.$transaction(async (tx) => {
+            const lessonToDelete = await tx.lesson.findUnique({
+                where: { id: lessonId },
+                select: { order_index: true }
+            });
+
+            if (!lessonToDelete) return;
+
+            await tx.lesson.delete({
+                where: { id: lessonId }
+            });
+
+            await tx.lesson.updateMany({
+                where: {
+                    course_id: courseId,
+                    order_index: {
+                        gt: lessonToDelete.order_index
+                    }
+                },
+                data: {
+                    order_index: {
+                        decrement: 1
+                    }
+                }
+            });
         });
 
-        return NextResponse.json({ message: 'Урок успешно удален' }, { status: 200 });
+        return NextResponse.json({ message: 'Порядок уроков обновлен' }, { status: 200 });
 
     } catch (error) {
         console.error('DELETE Lesson Error:', error);

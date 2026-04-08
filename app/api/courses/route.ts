@@ -10,18 +10,26 @@ export async function GET() {
             orderBy: {
                 created_at: 'desc'
             },
-            select: {
-                id: true,
-                title: true,
-                description: true,
-                software_product: true,
-                thumbnail_url: true,
+            include: {
+                _count: {
+                    select: { lessons: true }
+                }
             }
         });
 
-        return NextResponse.json(courses, { status: 200 });
+        const formattedCourses = courses.map(course => ({
+            id: course.id,
+            title: course.title,
+            description: course.description,
+            software_product: course.software_product,
+            thumbnail_url: course.thumbnail_url,
+            lessonsCount: course._count.lessons
+        }));
+
+        return NextResponse.json(formattedCourses, { status: 200 });
 
     } catch (error) {
+        console.error('Fetch Courses Error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
