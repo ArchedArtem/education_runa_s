@@ -1,67 +1,81 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from './lessons.module.scss';
 
-const MOCK_LESSONS = [
-    {
-        id: 'l-1',
-        order: 1,
-        title: 'Введение и интерфейс программы',
-        duration: '08:15',
-        hasVideo: true,
-        hasText: true,
-        hasFiles: true,
-        hasTest: false,
-        isPublished: true,
-    },
-    {
-        id: 'l-2',
-        order: 2,
-        title: 'Заполнение реквизитов организации',
-        duration: '12:05',
-        hasVideo: true,
-        hasText: true,
-        hasFiles: true,
-        hasTest: true,
-        isPublished: true,
-    },
-    {
-        id: 'l-3',
-        order: 3,
-        title: 'Настройка начальных остатков предприятия',
-        duration: '14:20',
-        hasVideo: true,
-        hasText: false,
-        hasFiles: true,
-        hasTest: true,
-        isPublished: false,
-    },
-    {
-        id: 'l-4',
-        order: 4,
-        title: 'Учет кассовых и банковских операций',
-        duration: '00:00',
-        hasVideo: false,
-        hasText: true,
-        hasFiles: false,
-        hasTest: false,
-        isPublished: false,
-    }
-];
+type LessonItem = {
+    id: number;
+    order: number;
+    title: string;
+    duration: string;
+    hasVideo: boolean;
+    hasText: boolean;
+    hasFiles: boolean;
+    hasTest: boolean;
+    isPublished: boolean;
+};
 
 export default function AdminLessonsPage() {
     const params = useParams();
-    const courseId = params.courseID as string;
+    const courseId = (params.courseId || params.courseID || params.id) as string;
 
-    const [lessons] = useState(MOCK_LESSONS);
+    const [lessons, setLessons] = useState<LessonItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const fetchLessons = async () => {
+            try {
+                const res = await fetch(`/api/admin/courses/${courseId}/lessons`);
+                if (!res.ok) throw new Error('Ошибка сервера при загрузке уроков');
+                const data = await res.json();
+                setLessons(data);
+            } catch (error) {
+                console.error(error);
+                alert('Не удалось загрузить список уроков');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (courseId) {
+            fetchLessons();
+        }
+    }, [courseId]);
+
+    const handleDelete = async (lessonId: number, lessonTitle: string) => {
+        if (confirm(`Вы действительно хотите удалить урок "${lessonTitle}"?\nЭто действие необратимо и удалит все материалы и тесты к уроку.`)) {
+            try {
+                const res = await fetch(`/api/admin/courses/${courseId}/lessons/${lessonId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) throw new Error('Ошибка при удалении урока');
+
+                setLessons(prevLessons => prevLessons.filter(l => l.id !== lessonId));
+
+            } catch (error) {
+                alert('Не удалось удалить урок. Проверьте консоль.');
+            }
+        }
+    };
 
     const filteredLessons = lessons.filter(lesson =>
         lesson.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    if (isLoading) {
+        return (
+            <div className={`${styles.pageContainer} flex items-center justify-center min-h-[50vh]`}>
+                <div className="flex flex-col items-center text-slate-400 gap-3">
+                    <span className="material-symbols-outlined animate-spin text-4xl">autorenew</span>
+                    <p className="font-medium">Загрузка программы курса...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.pageContainer}>
@@ -152,7 +166,10 @@ export default function AdminLessonsPage() {
                                     <span className="material-symbols-outlined">edit</span>
                                     Ред.
                                 </Link>
-                                <button className={styles.deleteBtn}>
+                                <button
+                                    onClick={() => handleDelete(lesson.id, lesson.title)}
+                                    className={styles.deleteBtn}
+                                >
                                     <span className="material-symbols-outlined">delete</span>
                                 </button>
                             </div>

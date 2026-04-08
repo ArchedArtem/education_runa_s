@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import styles from './new-lesson.module.scss';
@@ -10,8 +10,9 @@ const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 const INITIAL_LESSON = {
     title: '',
-    videoType: 'link',
+    videoType: 'link' as 'link' | 'upload',
     videoUrl: '',
+    duration: '00:00',
     content: '',
     isPublished: false,
 };
@@ -34,8 +35,30 @@ export default function NewLessonPage() {
     const [isSaving, setIsSaving] = useState(false);
 
     const [lessonData, setLessonData] = useState(INITIAL_LESSON);
-    const [files] = useState<any[]>([]);
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
+
     const [testData, setTestData] = useState<{isEnabled: boolean, passingScore: number, questions: Question[]}>(INITIAL_TEST);
+
+    const videoInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setVideoFile(file);
+        }
+    };
+
+    const handleFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFiles(prev => [...prev, ...Array.from(e.target.files as FileList)]);
+        }
+    };
+
+    const removeFile = (indexToRemove: number) => {
+        setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
 
     const handleAddQuestion = () => {
         const newQuestion: Question = {
@@ -66,18 +89,82 @@ export default function NewLessonPage() {
     };
 
     const handleSave = async () => {
-        if (!lessonData.title) {
+        if (!lessonData.title.trim()) {
             alert('Пожалуйста, введите название урока!');
             setActiveTab('main');
             return;
         }
 
+        if (testData.isEnabled && testData.questions.length === 0) {
+            alert('Вы включили тест, но не добавили ни одного вопроса.');
+            setActiveTab('test');
+            return;
+        }
+
         setIsSaving(true);
-        setTimeout(() => {
-            setIsSaving(false);
+        let finalVideoUrl = lessonData.videoUrl;
+        const uploadedMaterials: { name: string, url: string, type: string }[] = [];
+
+        try {
+            if (lessonData.videoType === 'upload' && videoFile) {
+                const formData = new FormData();
+                formData.append('file', videoFile);
+                const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+                if (!uploadRes.ok) throw new Error('Ошибка загрузки видео');
+                const uploadData = await uploadRes.json();
+                finalVideoUrl = uploadData.url;
+            }
+
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+                if (!uploadRes.ok) throw new Error(`Ошибка загрузки файла ${file.name}`);
+                const uploadData = await uploadRes.json();
+
+                uploadedMaterials.push({
+                    name: file.name,
+                    url: uploadData.url,
+                    type: file.name.split('.').pop() || 'unknown'
+                });
+            }
+
+            const payload = {
+                title: lessonData.title,
+                content: lessonData.content,
+                video_url: lessonData.videoType === 'upload' ? finalVideoUrl : lessonData.videoUrl,
+                duration: lessonData.duration || '00:00',
+                is_published: lessonData.isPublished,
+                materials: uploadedMaterials,
+                test: testData.isEnabled ? {
+                    passing_score: testData.passingScore,
+                    questions: testData.questions.map(q => ({
+                        question_text: q.text,
+                        question_type: q.type,
+                        answers: q.options.map(opt => ({
+                            answer_text: opt.text,
+                            is_correct: opt.isCorrect
+                        }))
+                    }))
+                } : null
+            };
+
+            const response = await fetch(`/api/admin/courses/${courseId}/lessons`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error('Ошибка при сохранении урока.');
+
             alert('Новый урок успешно создан!');
             router.push(`/admin/dashboard/courses/${courseId}/lessons`);
-        }, 800);
+
+        } catch (err) {
+            alert('Произошла ошибка при сохранении урока.');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -96,32 +183,23 @@ export default function NewLessonPage() {
                         <span className="material-symbols-outlined">
                             {isSaving ? 'autorenew' : 'add_circle'}
                         </span>
-                        {isSaving ? 'Создание...' : 'Создать урок'}
+                        {isSaving ? 'Сохранение...' : 'Создать урок'}
                     </button>
                 </div>
             </section>
 
             <section className={styles.tabsNav}>
                 <div className={styles.tabsList}>
-                    <button
-                        onClick={() => setActiveTab('main')}
-                        className={`${styles.tabItem} ${activeTab === 'main' ? styles.tabActive : ''}`}
-                    >
+                    <button onClick={() => setActiveTab('main')} className={`${styles.tabItem} ${activeTab === 'main' ? styles.tabActive : ''}`}>
                         <span className="material-symbols-outlined">article</span>
                         <span className={styles.tabText}>Контент</span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('files')}
-                        className={`${styles.tabItem} ${activeTab === 'files' ? styles.tabActive : ''}`}
-                    >
+                    <button onClick={() => setActiveTab('files')} className={`${styles.tabItem} ${activeTab === 'files' ? styles.tabActive : ''}`}>
                         <span className="material-symbols-outlined">attach_file</span>
                         <span className={styles.tabText}>Материалы</span>
                         {files.length > 0 && <span className={styles.badge}>{files.length}</span>}
                     </button>
-                    <button
-                        onClick={() => setActiveTab('test')}
-                        className={`${styles.tabItem} ${activeTab === 'test' ? styles.tabActive : ''}`}
-                    >
+                    <button onClick={() => setActiveTab('test')} className={`${styles.tabItem} ${activeTab === 'test' ? styles.tabActive : ''}`}>
                         <span className="material-symbols-outlined">quiz</span>
                         <span className={styles.tabText}>Тест</span>
                     </button>
@@ -174,13 +252,40 @@ export default function NewLessonPage() {
                                         />
                                     </div>
                                 ) : (
-                                    <div className={styles.uploadBox}>
+                                    <div
+                                        className={styles.uploadBox}
+                                        onClick={() => videoInputRef.current?.click()}
+                                    >
                                         <span className="material-symbols-outlined">video_library</span>
-                                        <p className={styles.uploadTitle}>Загрузить видеофайл</p>
-                                        <p className={styles.uploadHint}>MP4, WebM (до 2 ГБ)</p>
-                                        <button className={styles.btnSmall}>Выбрать видео</button>
+                                        <p className={styles.uploadTitle}>
+                                            {videoFile ? videoFile.name : 'Загрузить видеофайл'}
+                                        </p>
+                                        <p className={styles.uploadHint}>
+                                            {videoFile ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB` : 'MP4, WebM (до 2 ГБ)'}
+                                        </p>
+                                        <button className={styles.btnSmall}>
+                                            {videoFile ? 'Заменить видео' : 'Выбрать видео'}
+                                        </button>
+                                        <input
+                                            type="file"
+                                            accept="video/mp4, video/webm"
+                                            className={styles.hiddenInput}
+                                            ref={videoInputRef}
+                                            onChange={handleVideoSelect}
+                                        />
                                     </div>
                                 )}
+                            </div>
+
+                            <div className={styles.inputGroup} style={{ marginTop: '1.5rem' }}>
+                                <label className={styles.label}>Длительность (ММ:СС)</label>
+                                <input
+                                    type="text"
+                                    className={styles.textInput}
+                                    style={{ maxWidth: '120px' }}
+                                    value={lessonData.duration}
+                                    onChange={e => setLessonData({...lessonData, duration: e.target.value})}
+                                />
                             </div>
 
                             <div className={styles.editorSection}>
@@ -232,14 +337,49 @@ export default function NewLessonPage() {
             {activeTab === 'files' && (
                 <div className={styles.card}>
                     <div className={styles.filesContent}>
-                        <div className={styles.uploadBoxLarge}>
+                        <div
+                            className={styles.uploadBoxLarge}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
                             <div className={styles.uploadCircle}>
                                 <span className="material-symbols-outlined">cloud_upload</span>
                             </div>
                             <h3 className={styles.uploadTitleLarge}>Загрузить материалы</h3>
                             <p className={styles.uploadSubtitle}>PDF, DOCX, XLSX и другие</p>
                             <button className={styles.btnGhost}>Выбрать файлы</button>
+                            <input
+                                type="file"
+                                multiple
+                                className={styles.hiddenInput}
+                                ref={fileInputRef}
+                                onChange={handleFilesSelect}
+                            />
                         </div>
+
+                        {files.length > 0 && (
+                            <div className="mt-8 space-y-3 max-w-3xl mx-auto w-full">
+                                <h3 className="font-bold text-slate-900">Прикрепленные файлы</h3>
+                                {files.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                                                <span className="material-symbols-outlined">description</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-slate-900">{file.name}</p>
+                                                <p className="text-xs text-slate-400 font-medium">{(file.size / 1024).toFixed(1)} KB</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => removeFile(index)}
+                                            className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                                        >
+                                            <span className="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

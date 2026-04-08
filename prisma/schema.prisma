@@ -55,18 +55,21 @@ model Course {
 }
 
 model Lesson {
-  id          Int       @id @default(autoincrement())
-  course_id   Int
-  course      Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  title       String
-  content     String?   @db.Text
-  video_url   String?
-  order_index Int
+  id           Int       @id @default(autoincrement())
+  course_id    Int
+  course       Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  title        String
+  content      String?   @db.Text
+  video_url    String?
+  duration     String?   @default("00:00")
+  order_index  Int
   is_published Boolean   @default(false)
-  created_at  DateTime  @default(now())
-  
-  materials   Material[]
-  progress    UserProgress[]
+  created_at   DateTime  @default(now())
+
+  materials    Material[]
+  progress     UserProgress[]
+
+  test         Test?
 }
 
 model Material {
@@ -80,8 +83,10 @@ model Material {
 
 model Test {
   id            Int      @id @default(autoincrement())
-  course_id     Int
-  course        Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  course_id     Int?
+  course        Course?   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lesson_id     Int?      @unique
+  lesson        Lesson?   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
   title         String
   passing_score Int
   

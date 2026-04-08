@@ -4,37 +4,71 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import styles from './edit-course.module.scss';
 
-const MOCK_COURSE = {
-    id: '1',
-    title: 'Ведение учета в 1С:Бухгалтерия 8.3',
-    softwareProduct: '1С:Бухгалтерия',
-    authors: 'Иванова Е.А., Смирнов В.П.',
-    description: 'Изучение основных механизмов программы, настройка параметров учета, ввод начальных остатков и формирование бухгалтерской отчетности.',
-    thumbnailUrl: 'https://placehold.co/800x450/eff6ff/1d4ed8?text=1C+Course+Thumbnail',
-    isPublished: true,
-};
-
 export default function EditCoursePage() {
     const router = useRouter();
     const params = useParams();
     const courseId = params.courseID as string;
 
+    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [courseData, setCourseData] = useState(MOCK_COURSE);
-    const [previewImage, setPreviewImage] = useState<string | null>(MOCK_COURSE.thumbnailUrl);
+
+    const [courseData, setCourseData] = useState({
+        title: '',
+        softwareProduct: '',
+        authors: '',
+        description: '',
+        isPublished: false,
+        thumbnailUrl: null as string | null,
+    });
+
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    useEffect(() => {
+        const fetchCourse = async () => {
+            try {
+                const res = await fetch(`/api/admin/courses/${courseId}`);
+                if (!res.ok) throw new Error('Ошибка сервера при загрузке курса');
+
+                const data = await res.json();
+
+                setCourseData({
+                    title: data.title || '',
+                    softwareProduct: data.software_product || '',
+                    authors: data.authors || '',
+                    description: data.description || '',
+                    isPublished: data.is_published || false,
+                    thumbnailUrl: data.thumbnail_url || null,
+                });
+
+                setPreviewImage(data.thumbnail_url || null);
+            } catch (error) {
+                console.error(error);
+                alert('Не удалось загрузить данные курса');
+                router.push('/admin/dashboard/courses');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (courseId) {
+            fetchCourse();
+        }
+    }, [courseId, router]);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setSelectedFile(file);
             const imageUrl = URL.createObjectURL(file);
             setPreviewImage(imageUrl);
-            setCourseData({ ...courseData, thumbnailUrl: file.name });
         }
     };
 
     const handleRemoveImage = () => {
         setPreviewImage(null);
-        setCourseData({ ...courseData, thumbnailUrl: '' });
+        setSelectedFile(null);
+        setCourseData({ ...courseData, thumbnailUrl: null });
     };
 
     const handleSave = async () => {
@@ -44,12 +78,64 @@ export default function EditCoursePage() {
         }
 
         setIsSaving(true);
-        setTimeout(() => {
-            setIsSaving(false);
+        let finalThumbnailUrl = courseData.thumbnailUrl;
+
+        try {
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const uploadRes = await fetch('/api/admin/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadRes.ok) throw new Error('Ошибка загрузки изображения');
+
+                const uploadData = await uploadRes.json();
+                finalThumbnailUrl = uploadData.url;
+            }
+
+            const coursePayload = {
+                title: courseData.title,
+                software_product: courseData.softwareProduct,
+                authors: courseData.authors,
+                description: courseData.description,
+                thumbnail_url: finalThumbnailUrl,
+                is_published: courseData.isPublished
+            };
+
+            const response = await fetch(`/api/admin/courses/${courseId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(coursePayload)
+            });
+
+            if (!response.ok) throw new Error('Ошибка сохранения изменений в БД');
+
             alert('Изменения успешно сохранены!');
             router.push('/admin/dashboard/courses');
-        }, 800);
+
+        } catch (err) {
+            console.error(err);
+            alert('Произошла ошибка при сохранении курса');
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className={`${styles.container} flex items-center justify-center min-h-[50vh]`}>
+                <div className="flex flex-col items-center text-slate-400 gap-3">
+                    <span className="material-symbols-outlined animate-spin text-4xl">autorenew</span>
+                    <p className="font-medium">Загрузка данных курса...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>
