@@ -16,6 +16,8 @@ export default function EditLessonPage() {
     const router = useRouter();
     const params = useParams();
 
+    const [isHtmlMode, setIsHtmlMode] = useState(false);
+
     const courseId = (params.courseID || params.courseId || params.id) as string;
     const lessonId = (params.lessonID || params.lessonId) as string;
 
@@ -54,7 +56,7 @@ export default function EditLessonPage() {
 
                 setLessonData({
                     title: data.title || '',
-                    videoType: 'link', // По умолчанию показываем ссылку, даже если загружено файлом
+                    videoType: 'link',
                     videoUrl: data.video_url || '',
                     duration: data.duration || '00:00',
                     content: data.content || '',
@@ -277,9 +279,60 @@ export default function EditLessonPage() {
                             </div>
 
                             <div className={styles.editorSection}>
-                                <label className={styles.label}>Текстовый конспект</label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className={styles.label} style={{ marginBottom: 0 }}>Текстовый конспект</label>
+
+                                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsHtmlMode(false)}
+                                            className={`flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${!isHtmlMode ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <span className="material-symbols-outlined text-[16px] mr-1">edit</span>
+                                            Визуальный
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsHtmlMode(true)}
+                                            className={`flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${isHtmlMode ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <span className="material-symbols-outlined text-[16px] mr-1">code</span>
+                                            HTML
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className={styles.quillWrapper}>
-                                    <ReactQuill theme="snow" value={lessonData.content} onChange={val => setLessonData({...lessonData, content: val})} />
+                                    {isHtmlMode ? (
+                                        <textarea
+                                            value={lessonData.content}
+                                            onChange={e => setLessonData({...lessonData, content: e.target.value})}
+                                            className="w-full min-h-[300px] p-4 font-mono text-sm rounded-b-lg outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                                            style={{
+                                                backgroundColor: '#1e1e1e',
+                                                color: '#d4d4d4',
+                                                caretColor: '#ffffff',
+                                                border: '1px solid #e2e8f0'
+                                            }}
+                                            placeholder="<h1>Вставьте свой HTML код сюда...</h1>"
+                                        />
+                                    ) : (
+                                        <ReactQuill
+                                            theme="snow"
+                                            value={lessonData.content}
+                                            onChange={(content) => setLessonData({...lessonData, content: content})}
+                                            placeholder="Начните писать конспект урока здесь..."
+                                            modules={{
+                                                toolbar: [
+                                                    [{ 'header': [1, 2, 3, false] }],
+                                                    ['bold', 'italic', 'underline', 'strike'],
+                                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                                    ['link', 'image', 'video'],
+                                                    ['clean']
+                                                ]
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         </div>
