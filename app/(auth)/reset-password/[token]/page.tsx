@@ -106,7 +106,6 @@ export default function ResetPasswordPage() {
                         </div>
                     ) : (
                         <form className="space-y-6" onSubmit={handleSubmit}>
-                            {/* Новый пароль */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                     Новый пароль
