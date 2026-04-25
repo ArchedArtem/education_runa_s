@@ -551,3 +551,27 @@
 
 .iconSuccess { color: #22c55e; }
 .iconBlue { color: #1d4ed8; }
+
+.loaderContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: #94a3b8;
+
+  .spinner {
+    font-size: 48px;
+    margin-bottom: 16px;
+    animation: spin 2s linear infinite;
+  }
+
+  p {
+    font-weight: 500;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
