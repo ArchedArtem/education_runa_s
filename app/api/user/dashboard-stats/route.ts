@@ -35,7 +35,6 @@ export async function GET(req: Request) {
 
         if (!user) return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 });
 
-        // ОБЩАЯ СТАТИСТИКА (По всей платформе)
         const totalLessonsCompleted = await prisma.userProgress.count({
             where: { user_id: userId, is_completed: true }
         });
@@ -51,10 +50,9 @@ export async function GET(req: Request) {
             _avg: { score: true }
         });
 
-        // СТАТИСТИКА ТЕКУЩЕГО (ПОСЛЕДНЕГО) КУРСА
         const lastProgress = await prisma.userProgress.findFirst({
             where: { user_id: userId },
-            orderBy: { id: 'desc' }, // Берем самую последнюю запись прогресса
+            orderBy: { id: 'desc' },
             include: {
                 lesson: {
                     include: { course: true }
@@ -66,12 +64,10 @@ export async function GET(req: Request) {
         if (lastProgress) {
             const courseId = lastProgress.lesson.course_id;
 
-            // Считаем все опубликованные уроки В ЭТОМ курсе
             const courseTotalLessons = await prisma.lesson.count({
                 where: { course_id: courseId, is_published: true }
             });
 
-            // Считаем пройденные уроки В ЭТОМ курсе
             const courseCompletedLessons = await prisma.userProgress.count({
                 where: {
                     user_id: userId,
@@ -80,7 +76,6 @@ export async function GET(req: Request) {
                 }
             });
 
-            // Высчитываем точный процент
             const percentage = courseTotalLessons > 0
                 ? Math.round((courseCompletedLessons / courseTotalLessons) * 100)
                 : 0;
@@ -96,7 +91,6 @@ export async function GET(req: Request) {
             };
         }
 
-        // История тестов
         const recentTests = await prisma.testResult.findMany({
             where: { user_id: userId },
             take: 5,

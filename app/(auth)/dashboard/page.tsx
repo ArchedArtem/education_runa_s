@@ -44,7 +44,6 @@ export default function Dashboard() {
         fetchDashboardData();
     }, []);
 
-    // Твой новый лоадер
     if (loading) {
         return (
             <div className={styles.pageWrapper}>
