@@ -11,6 +11,7 @@ type Course = {
     software_product: string;
     thumbnail_url: string;
     lessonsCount: number;
+    likesCount: number;
 };
 
 export default function CoursesPage() {
@@ -23,7 +24,7 @@ export default function CoursesPage() {
         const fetchCourses = async () => {
             try {
                 const res = await fetch('/api/courses');
-                if (!res.ok) throw new Error('Ошибка при загрузке курсов');
+                if (!res.ok) throw new Error();
                 const data = await res.json();
                 setCourses(data);
             } catch (err) {
@@ -121,6 +122,10 @@ export default function CoursesPage() {
                                         <div className={styles.statItem}>
                                             <span className="material-symbols-outlined">play_lesson</span>
                                             <span>{course.lessonsCount} уроков</span>
+                                        </div>
+                                        <div className={styles.statItem}>
+                                            <span className="material-symbols-outlined" style={{ color: '#ef4444', fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                                            <span>{course.likesCount}</span>
                                         </div>
                                     </div>
 

@@ -156,22 +156,13 @@
 
 .courseCard {
   min-width: 0;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.courseCard {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
   transition: all 0.3s ease;
 
   &:hover {
@@ -272,7 +263,8 @@
   padding-top: 16px;
   border-top: 1px solid #f1f5f9;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20px;
   align-items: center;
   margin-bottom: 24px;
 }

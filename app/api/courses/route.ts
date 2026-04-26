@@ -12,7 +12,7 @@ export async function GET() {
             },
             include: {
                 _count: {
-                    select: { lessons: true }
+                    select: { lessons: true, likes: true }
                 }
             }
         });
@@ -23,13 +23,13 @@ export async function GET() {
             description: course.description,
             software_product: course.software_product,
             thumbnail_url: course.thumbnail_url,
-            lessonsCount: course._count.lessons
+            lessonsCount: course._count.lessons,
+            likesCount: course._count.likes
         }));
 
         return NextResponse.json(formattedCourses, { status: 200 });
 
     } catch (error) {
-        console.error('Fetch Courses Error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

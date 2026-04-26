@@ -38,6 +38,9 @@ model User {
   
   progress      UserProgress[]
   test_results  TestResult[]
+
+  course_likes    CourseLike[]
+  course_comments CourseComment[]
 }
 
 model Course {
@@ -52,6 +55,8 @@ model Course {
   
   lessons          Lesson[]
   tests            Test[]
+  likes    CourseLike[]
+  comments CourseComment[]
 }
 
 model Lesson {
@@ -131,4 +136,24 @@ model TestResult {
   score        Int
   is_passed    Boolean
   attempt_date DateTime @default(now())
+}
+
+model CourseLike {
+  id        Int      @id @default(autoincrement())
+  course_id Int
+  user_id   String
+  course    Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([course_id, user_id])
+}
+
+model CourseComment {
+  id         Int      @id @default(autoincrement())
+  course_id  Int
+  user_id    String
+  text       String
+  created_at DateTime @default(now())
+  course     Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
