@@ -1,33 +1,13 @@
-import type {Metadata} from "next";
-import "../globals.css";
-import Header from "@/app/components/Header/Header";
-import Footer from "@/app/components/Footer/Footer";
-
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from "@vercel/analytics/next"
-
-export const metadata: Metadata = {
-    title: "Обучение Руна С",
-    description: "Платформа дистанционного обучения клиентов 1С",
-};
-
-export default function RootLayout({
+export default function AuthLayout({
                                        children,
                                    }: {
     children: React.ReactNode;
 }) {
     return (
-        <html lang="ru">
-        <head>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-        </head>
-        <body className="flex flex-col min-h-screen">
-        <main className="flex-grow">
-            {children}
-        </main>
-        <SpeedInsights/>
-        <Analytics/>
-        </body>
-        </html>
+        <div className="flex flex-col min-h-screen w-full">
+            <main className="flex-grow flex flex-col">
+                {children}
+            </main>
+        </div>
     );
 }

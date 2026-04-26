@@ -1,8 +1,23 @@
+"use client";
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import styles from './not-found.module.scss';
-import "./globals.css";
 
 export default function NotFound() {
+    const pathname = usePathname();
+
+    let backLink = "/";
+    let btnText = "На главную страницу";
+
+    if (pathname.startsWith('/admin/dashboard')) {
+        backLink = "/admin/dashboard";
+        btnText = "В панель администратора";
+    } else if (pathname.startsWith('/dashboard')) {
+        backLink = "/dashboard";
+        btnText = "В личный кабинет";
+    }
+
     return (
         <main className={`${styles.main} ${styles.bgMesh}`}>
             <div className="absolute top-[10%] left-[-5%] w-64 h-64 rounded-full border border-white/10" style={{ background: 'rgba(255, 255, 255, 0.08)', filter: 'blur(2px)' }}></div>
@@ -12,11 +27,11 @@ export default function NotFound() {
                 <div className={styles.errorCode}>404</div>
                 <h1 className={styles.title}>Страница не найдена</h1>
                 <p className={styles.description}>
-                    Кажется, вы перешли по неверной ссылке или страница была удалена. Давайте вернемся к обучающим материалам по 1С.
+                    Кажется, вы перешли по неверной ссылке или страница была удалена.
                 </p>
 
-                <Link href="/" className={styles.homeBtn}>
-                    На главную страницу
+                <Link href={backLink} className={styles.homeBtn}>
+                    {btnText}
                 </Link>
             </div>
         </main>
