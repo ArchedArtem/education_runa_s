@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// import { SpeedInsights } from "@vercel/speed-insights/next";
-// import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
     title: "Обучение Руна С",
@@ -20,8 +18,6 @@ export default function RootLayout({
         </head>
         <body className="flex flex-col min-h-screen w-full">
         {children}
-        {/*<SpeedInsights />*/}
-        {/*<Analytics />*/}
         </body>
         </html>
     );
