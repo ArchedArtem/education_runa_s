@@ -40,15 +40,12 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
         fetchAdminProfile();
     }, []);
 
-    // Поиск по нажатию Enter
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && searchQuery.trim()) {
-            // Перенаправляем в раздел пользователей с параметром поиска
             router.push(`/admin/dashboard/users?search=${encodeURIComponent(searchQuery)}`);
         }
     };
 
-    // Перевод системной роли
     const getRoleDisplay = (role?: string) => {
         if (!role) return 'Загрузка...';
         const r = role.toLowerCase();

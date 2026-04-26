@@ -16,13 +16,20 @@ export default function StatisticPage() {
     const [data, setData] = useState<StatData | null>(null);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchStatsAndRole = async () => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('token');
                 const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const roleRes = await fetch('/api/admin/auth/me', { headers });
+                if (roleRes.ok) {
+                    const roleData = await roleRes.json();
+                    setUserRole(roleData.roleName);
+                }
 
                 const res = await fetch(`/api/admin/statistic?period=${filter}`, { headers });
                 if (!res.ok) throw new Error('Ошибка загрузки статистики');
@@ -35,7 +42,7 @@ export default function StatisticPage() {
             }
         };
 
-        fetchStats();
+        fetchStatsAndRole();
     }, [filter]);
 
     return (
@@ -59,47 +66,51 @@ export default function StatisticPage() {
                 </div>
             ) : (
                 <>
-                    <section className={styles.statsGrid}>
-                        <div className={styles.statCard}>
-                            <span className={styles.statLabel}>Уникальных клиентов</span>
-                            <span className={styles.statValue}>{data?.overview.activeUsers || 0}</span>
-                        </div>
-                        <div className={styles.statCard}>
-                            <span className={styles.statLabel}>Всего уникальных открытий</span>
-                            <span className={styles.statValue}>{data?.overview.totalViews || 0}</span>
-                        </div>
-                        <div className={styles.statCard}>
-                            <span className={styles.statLabel}>Успешность тестов</span>
-                            <span className={styles.statValue}>{data?.overview.passRate || 0}%</span>
-                        </div>
-                        <div className={styles.statCard}>
-                            <span className={styles.statLabel}>Средний балл по платформе</span>
-                            <span className={styles.statValue}>{data?.overview.avgScore || 0}</span>
-                        </div>
-                    </section>
+                    {userRole === 'Admin' && (
+                        <section className={styles.statsGrid}>
+                            <div className={styles.statCard}>
+                                <span className={styles.statLabel}>Уникальных клиентов</span>
+                                <span className={styles.statValue}>{data?.overview.activeUsers || 0}</span>
+                            </div>
+                            <div className={styles.statCard}>
+                                <span className={styles.statLabel}>Всего уникальных открытий</span>
+                                <span className={styles.statValue}>{data?.overview.totalViews || 0}</span>
+                            </div>
+                            <div className={styles.statCard}>
+                                <span className={styles.statLabel}>Успешность тестов</span>
+                                <span className={styles.statValue}>{data?.overview.passRate || 0}%</span>
+                            </div>
+                            <div className={styles.statCard}>
+                                <span className={styles.statLabel}>Средний балл по платформе</span>
+                                <span className={styles.statValue}>{data?.overview.avgScore || 0}</span>
+                            </div>
+                        </section>
+                    )}
 
                     <section className={styles.bentoGridTop}>
-                        <div className={styles.panel}>
-                            <div className={styles.panelHeader}>
-                                <h2>Топ клиентов</h2>
-                                <span className="material-symbols-outlined text-amber-500">emoji_events</span>
-                            </div>
-                            <div className={styles.leaderboard}>
-                                {data?.topStudents && data.topStudents.length > 0 ? data.topStudents.map((st, i) => (
-                                    <div key={i} className={styles.leaderboardItem}>
-                                        <div className={styles.rank}>{i + 1}</div>
-                                        <div className={styles.studentInfo}>
-                                            <h3>{st.name}</h3>
-                                            <p>{st.company}</p>
+                        {userRole === 'Admin' && (
+                            <div className={styles.panel}>
+                                <div className={styles.panelHeader}>
+                                    <h2>Топ клиентов</h2>
+                                    <span className="material-symbols-outlined text-amber-500">emoji_events</span>
+                                </div>
+                                <div className={styles.leaderboard}>
+                                    {data?.topStudents && data.topStudents.length > 0 ? data.topStudents.map((st, i) => (
+                                        <div key={i} className={styles.leaderboardItem}>
+                                            <div className={styles.rank}>{i + 1}</div>
+                                            <div className={styles.studentInfo}>
+                                                <h3>{st.name}</h3>
+                                                <p>{st.company}</p>
+                                            </div>
+                                            <div className={styles.studentScore}>
+                                                <span className={styles.score}>{st.avgScore}</span>
+                                                <span className={styles.tests}>тестов: {st.testsTaken}</span>
+                                            </div>
                                         </div>
-                                        <div className={styles.studentScore}>
-                                            <span className={styles.score}>{st.avgScore}</span>
-                                            <span className={styles.tests}>тестов: {st.testsTaken}</span>
-                                        </div>
-                                    </div>
-                                )) : <p className={styles.emptyState}>Нет данных для рейтинга</p>}
+                                    )) : <p className={styles.emptyState}>Нет данных для рейтинга</p>}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className={styles.panel}>
                             <div className={styles.panelHeader}>
@@ -136,28 +147,30 @@ export default function StatisticPage() {
                     </section>
 
                     <section className={styles.bentoGridBottom}>
-                        <div className={styles.panel}>
-                            <h2>Популярность курсов</h2>
-                            {data?.courseStats && data.courseStats.length > 0 ? (
-                                <div className={styles.courseList}>
-                                    {data.courseStats.map((course) => (
-                                        <div key={course.id} className={styles.courseItem}>
-                                            <div className={styles.courseInfo}>
-                                                <h3>{course.title}</h3>
-                                                <span>{course.completionRate}%</span>
+                        {userRole === 'Admin' && (
+                            <div className={styles.panel}>
+                                <h2>Популярность курсов</h2>
+                                {data?.courseStats && data.courseStats.length > 0 ? (
+                                    <div className={styles.courseList}>
+                                        {data.courseStats.map((course) => (
+                                            <div key={course.id} className={styles.courseItem}>
+                                                <div className={styles.courseInfo}>
+                                                    <h3>{course.title}</h3>
+                                                    <span>{course.completionRate}%</span>
+                                                </div>
+                                                <div className={styles.progressTrack}>
+                                                    <div className={styles.progressFill} style={{ width: `${course.completionRate}%` }}></div>
+                                                </div>
+                                                <div className={styles.meta}>
+                                                    <span>Завершаемость</span>
+                                                    <span>Уникальных учеников: {course.uniqueViews}</span>
+                                                </div>
                                             </div>
-                                            <div className={styles.progressTrack}>
-                                                <div className={styles.progressFill} style={{ width: `${course.completionRate}%` }}></div>
-                                            </div>
-                                            <div className={styles.meta}>
-                                                <span>Завершаемость</span>
-                                                <span>Уникальных учеников: {course.uniqueViews}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : <p className={styles.emptyState}>Нет данных по курсам.</p>}
-                        </div>
+                                        ))}
+                                    </div>
+                                ) : <p className={styles.emptyState}>Нет данных по курсам.</p>}
+                            </div>
+                        )}
 
                         <div className={styles.panel}>
                             <h2>Хронология событий</h2>

@@ -19,7 +19,6 @@ export async function GET(req: Request) {
 
         const decoded = jwt.verify(token, JWT_SECRET) as any;
 
-        // Обязательно 'include: { role: true }', чтобы получить название роли
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
             include: { role: true }
@@ -30,7 +29,7 @@ export async function GET(req: Request) {
         return NextResponse.json({
             firstName: user.first_name,
             lastName: user.last_name,
-            roleName: user.role?.name || 'admin', // Защита на случай, если роли нет
+            roleName: user.role?.name || 'admin',
             email: user.email
         }, { status: 200 });
 

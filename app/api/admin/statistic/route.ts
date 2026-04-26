@@ -5,23 +5,35 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+async function getUserRole(req: Request) {
+    const authHeader = req.headers.get('authorization');
+    let token = authHeader ? authHeader.split(' ')[1] : null;
+
+    if (!token) {
+        const cookieStore = await cookies();
+        token = cookieStore.get('auth_token')?.value || null;
+    }
+
+    if (!token) return null;
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            include: { role: true }
+        });
+        return user?.role?.name || null;
+    } catch {
+        return null;
+    }
+}
+
 export async function GET(req: Request) {
     try {
-        const authHeader = req.headers.get('authorization');
-        let token: string | null = authHeader ? authHeader.split(' ')[1] : null;
+        const role = await getUserRole(req);
 
-        if (!token) {
-            const cookieStore = await cookies();
-            token = cookieStore.get('auth_token')?.value|| null;
-        }
-
-        if (!token) return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
-
-        let decoded: any;
-        try {
-            decoded = jwt.verify(token, JWT_SECRET);
-        } catch (err) {
-            return NextResponse.json({ error: 'Невалидный токен' }, { status: 401 });
+        if (!role || (role !== 'Admin' && role !== 'Moderator')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const url = new URL(req.url);
@@ -192,7 +204,6 @@ export async function GET(req: Request) {
         });
 
     } catch (error) {
-        console.error('Statistic API Error:', error);
-        return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

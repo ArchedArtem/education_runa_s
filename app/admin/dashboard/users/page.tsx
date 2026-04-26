@@ -25,6 +25,7 @@ export default function AdminUsersPage() {
     const [activeTab, setActiveTab] = useState<'users' | 'invites'>('users');
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('All');
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [newInvite, setNewInvite] = useState({code: '', description: ''});
     const [isSavingInvite, setIsSavingInvite] = useState(false);
@@ -47,16 +48,27 @@ export default function AdminUsersPage() {
 
     const [editingUser, setEditingUser] = useState<UserType | null>(null);
 
+    useEffect(() => {
+        const fetchRole = async () => {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+            try {
+                const res = await fetch('/api/admin/auth/me', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUserRole(data.roleName);
+                }
+            } catch (err) {}
+        };
+        fetchRole();
+    }, []);
+
     const getRoleName = (roleId: number) => {
         switch (roleId) {
-            case 1:
-                return 'Admin';
-            case 2:
-                return 'Client';
-            case 3:
-                return 'Moderator';
-            default:
-                return 'Client';
+            case 1: return 'Admin';
+            case 2: return 'Client';
+            case 3: return 'Moderator';
+            default: return 'Client';
         }
     };
 
@@ -73,11 +85,13 @@ export default function AdminUsersPage() {
     });
 
     useEffect(() => {
-        if (activeTab === 'invites') {
+        if (activeTab === 'invites' && userRole === 'Admin') {
             const fetchInvites = async () => {
                 setIsLoadingInvites(true);
                 try {
-                    const res = await fetch('/api/admin/invites');
+                    const token = localStorage.getItem('token');
+                    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+                    const res = await fetch('/api/admin/invites', { headers });
                     if (res.ok) {
                         const data = await res.json();
                         setInvites(data);
@@ -92,7 +106,9 @@ export default function AdminUsersPage() {
             const fetchUsers = async () => {
                 setIsLoadingUsers(true);
                 try {
-                    const res = await fetch('/api/admin/users');
+                    const token = localStorage.getItem('token');
+                    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+                    const res = await fetch('/api/admin/users', { headers });
                     if (res.ok) {
                         const data = await res.json();
                         setUsers(data);
@@ -104,16 +120,21 @@ export default function AdminUsersPage() {
             };
             fetchUsers();
         }
-    }, [activeTab]);
+    }, [activeTab, userRole]);
 
     const handleCreateInvite = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newInvite.code) return;
         setIsSavingInvite(true);
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/invites', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify(newInvite),
             });
             const data = await res.json();
@@ -135,9 +156,14 @@ export default function AdminUsersPage() {
             invite.id === id ? {...invite, isActive: !currentStatus} : invite
         ));
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/invites', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify({id}),
             });
             if (!res.ok) throw new Error();
@@ -153,7 +179,9 @@ export default function AdminUsersPage() {
         const previousInvites = [...invites];
         setInvites(prev => prev.filter(invite => invite.id !== id));
         try {
-            const res = await fetch(`/api/admin/invites?id=${id}`, {method: 'DELETE'});
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch(`/api/admin/invites?id=${id}`, {method: 'DELETE', headers});
             if (!res.ok) throw new Error();
         } catch (error) {
             setInvites(previousInvites);
@@ -164,9 +192,14 @@ export default function AdminUsersPage() {
         e.preventDefault();
         setIsSavingUser(true);
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify(newUser),
             });
             const data = await res.json();
@@ -189,9 +222,14 @@ export default function AdminUsersPage() {
         if (!editingUser) return;
         setIsSavingUser(true);
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/users', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify({action: 'edit', ...editingUser}),
             });
             const data = await res.json();
@@ -213,9 +251,14 @@ export default function AdminUsersPage() {
             user.id === id ? {...user, is_block: !currentStatus} : user
         ));
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/users', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify({id, action: 'toggle_block'}),
             });
             if (!res.ok) throw new Error();
@@ -242,12 +285,14 @@ export default function AdminUsersPage() {
                     >
                         Пользователи
                     </button>
-                    <button
-                        onClick={() => setActiveTab('invites')}
-                        className={activeTab === 'invites' ? styles.tabBtnActive : styles.tabBtn}
-                    >
-                        Коды доступа
-                    </button>
+                    {userRole === 'Admin' && (
+                        <button
+                            onClick={() => setActiveTab('invites')}
+                            className={activeTab === 'invites' ? styles.tabBtnActive : styles.tabBtn}
+                        >
+                            Коды доступа
+                        </button>
+                    )}
                 </div>
             </section>
 
@@ -255,14 +300,14 @@ export default function AdminUsersPage() {
                 <div className={styles.animateFadeIn}>
                     <div className={styles.toolbar}>
                         <div className={styles.searchWrapper}>
-                        <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
+                            <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
                             <input
-                            type="text"
-                            placeholder="Поиск по фамилии, email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={styles.searchInput}
-                        />
+                                type="text"
+                                placeholder="Поиск по фамилии, email..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={styles.searchInput}
+                            />
                         </div>
                         <div className={styles.filtersWrapper}>
                             <div className={styles.rolesScroll}>
@@ -276,13 +321,15 @@ export default function AdminUsersPage() {
                                     </button>
                                 ))}
                             </div>
-                            <button
-                                onClick={() => setIsUserModalOpen(true)}
-                                className={styles.addBtn}
-                            >
-                                <span className="material-symbols-outlined" style={{fontSize: '18px'}}>add</span>
-                                Добавить
-                            </button>
+                            {userRole === 'Admin' && (
+                                <button
+                                    onClick={() => setIsUserModalOpen(true)}
+                                    className={styles.addBtn}
+                                >
+                                    <span className="material-symbols-outlined" style={{fontSize: '18px'}}>add</span>
+                                    Добавить
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -374,13 +421,15 @@ export default function AdminUsersPage() {
                                                 </td>
                                                 <td className={styles.td} style={{textAlign: 'right'}}>
                                                     <div className={styles.actions}>
-                                                        <button
-                                                            onClick={() => setEditingUser(user)}
-                                                            className={styles.actionBtn}
-                                                        >
-                                                            <span className="material-symbols-outlined"
-                                                                  style={{fontSize: '20px'}}>edit</span>
-                                                        </button>
+                                                        {userRole === 'Admin' && (
+                                                            <button
+                                                                onClick={() => setEditingUser(user)}
+                                                                className={styles.actionBtn}
+                                                            >
+                                                                <span className="material-symbols-outlined"
+                                                                      style={{fontSize: '20px'}}>edit</span>
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => handleToggleUserBlock(user.id, user.is_block)}
                                                             className={user.is_block ? styles.actionBtnSuccess : styles.actionBtnDanger}
@@ -404,7 +453,7 @@ export default function AdminUsersPage() {
                 </div>
             )}
 
-            {activeTab === 'invites' && (
+            {activeTab === 'invites' && userRole === 'Admin' && (
                 <div className={styles.animateFadeIn}>
                     <section className={styles.inviteHeader}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem'}}>

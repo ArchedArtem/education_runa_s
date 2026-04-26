@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface AdminSidebarProps {
     isOpen: boolean;
@@ -12,6 +12,20 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const [role, setRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                const res = await fetch('/api/admin/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    setRole(data.roleName?.toLowerCase() || null);
+                }
+            } catch {}
+        };
+        fetchRole();
+    }, []);
 
     useEffect(() => {
         setIsOpen(false);

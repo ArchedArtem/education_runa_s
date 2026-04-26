@@ -23,10 +23,21 @@ export default function AdminCoursesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
 
+    const [userRole, setUserRole] = useState<string | null>(null);
+
     useEffect(() => {
-        const fetchCourses = async () => {
+        const fetchCoursesAndRole = async () => {
             try {
-                const res = await fetch('/api/admin/courses');
+                const token = localStorage.getItem('token');
+                const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const roleRes = await fetch('/api/admin/auth/me', { headers });
+                if (roleRes.ok) {
+                    const roleData = await roleRes.json();
+                    setUserRole(roleData.roleName?.toLowerCase() || 'Moderator');
+                }
+
+                const res = await fetch('/api/admin/courses', { headers });
                 if (!res.ok) throw new Error('Ошибка сервера при загрузке');
                 const data = await res.json();
                 setCourses(data);
@@ -38,7 +49,7 @@ export default function AdminCoursesPage() {
             }
         };
 
-        fetchCourses();
+        fetchCoursesAndRole();
     }, []);
 
     const handleDelete = async (id: number, title: string) => {
@@ -47,8 +58,12 @@ export default function AdminCoursesPage() {
         if (!confirmDelete) return;
 
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
             const res = await fetch(`/api/admin/courses/${id}`, {
                 method: 'DELETE',
+                headers,
             });
 
             if (!res.ok) throw new Error('Ошибка при удалении');
@@ -82,10 +97,13 @@ export default function AdminCoursesPage() {
                     <h1 className={styles.title}>Курсы и Уроки</h1>
                     <p className={styles.subtitle}>Управление образовательным контентом платформы.</p>
                 </div>
-                <Link href="/admin/dashboard/courses/new" className={styles.createButton}>
-                    <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                    Создать курс
-                </Link>
+
+                {userRole === 'admin' && (
+                    <Link href="/admin/dashboard/courses/new" className={styles.createButton}>
+                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                        Создать курс
+                    </Link>
+                )}
             </section>
 
             <section className={styles.filtersBar}>
@@ -186,13 +204,15 @@ export default function AdminCoursesPage() {
                                     Изменить
                                 </Link>
 
-                                <button
-                                    onClick={() => handleDelete(course.id, course.title)}
-                                    className={`${styles.actionButton} ${styles.delete}`}
-                                >
-                                    <span className={`material-symbols-outlined ${styles.actionIcon}`}>delete</span>
-                                    Удалить
-                                </button>
+                                {userRole === 'admin' && (
+                                    <button
+                                        onClick={() => handleDelete(course.id, course.title)}
+                                        className={`${styles.actionButton} ${styles.delete}`}
+                                    >
+                                        <span className={`material-symbols-outlined ${styles.actionIcon}`}>delete</span>
+                                        Удалить
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))

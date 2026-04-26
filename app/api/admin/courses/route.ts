@@ -1,5 +1,32 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+async function getUserRole(req: Request) {
+    const authHeader = req.headers.get('authorization');
+    let token = authHeader ? authHeader.split(' ')[1] : null;
+
+    if (!token) {
+        const cookieStore = await cookies();
+        token = cookieStore.get('auth_token')?.value || null;
+    }
+
+    if (!token) return null;
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            include: { role: true }
+        });
+        return user?.role?.name || null;
+    } catch {
+        return null;
+    }
+}
 
 export async function GET() {
     try {
@@ -22,6 +49,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const role = await getUserRole(request);
+
+        if (!role) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (role !== 'Admin') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const body = await request.json();
         const { title, softwareProduct, authors, description, thumbnailUrl, isPublished } = body;
 
