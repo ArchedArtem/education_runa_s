@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import styles from './edit-lesson.module.scss';
 import 'react-quill-new/dist/quill.snow.css';
@@ -15,6 +15,7 @@ type ExistingMaterial = { id: number; name: string; url: string; type: string };
 export default function EditLessonPage() {
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
 
     const [isHtmlMode, setIsHtmlMode] = useState(false);
 
@@ -23,7 +24,11 @@ export default function EditLessonPage() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'main' | 'files' | 'test'>('main');
+
+    const tabParam = searchParams.get('tab') as 'main' | 'files' | 'test';
+    const [activeTab, setActiveTab] = useState<'main' | 'files' | 'test'>(
+        ['main', 'files', 'test'].includes(tabParam) ? tabParam : 'main'
+    );
 
     const [lessonData, setLessonData] = useState({
         title: '',
@@ -147,7 +152,7 @@ export default function EditLessonPage() {
 
         setIsSaving(true);
         let finalVideoUrl = lessonData.videoUrl;
-        const finalMaterials = [...existingMaterials]; // Сначала кладем те, что уже есть
+        const finalMaterials = [...existingMaterials];
 
         try {
             if (lessonData.videoType === 'upload' && videoFile) {
