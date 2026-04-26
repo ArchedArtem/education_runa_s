@@ -172,7 +172,7 @@ export default function StatisticPage() {
                                                 </div>
                                                 <div className={styles.timelineContent}>
                                                     <p>
-                                                        <strong>{item.userName}</strong> {isLesson ? 'завершил(а) урок' : (item.success ? `сдал(а) тест на ${item.score}б.` : `провалил(а) тест (${item.score}б.)`)} <strong>«{item.targetName}»</strong>
+                                                        <strong>{item.userName}</strong> {isLesson ? 'завершил(а) урок' : (item.success ? `сдал(а) тест на ${item.score} б.` : `провалил(а) тест (${item.score}б.)`)} <strong>«{item.targetName}»</strong>
                                                     </p>
                                                     <span className={styles.date}>
                                                         {item.date ? new Date(item.date).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Старая запись'}

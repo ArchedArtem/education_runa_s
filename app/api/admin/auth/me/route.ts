@@ -1,39 +1,41 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import prisma from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 
-export async function GET() {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+export async function GET(req: Request) {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get("auth_token")?.value;
+        const authHeader = req.headers.get('authorization');
+        let token: string | null = authHeader ? authHeader.split(' ')[1] : null;
 
         if (!token) {
-            return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+            const cookieStore = await cookies();
+            token = cookieStore.get('auth_token')?.value || null;
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret") as any;
+        if (!token) return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
 
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+
+        // Обязательно 'include: { role: true }', чтобы получить название роли
         const user = await prisma.user.findUnique({
-            where: { id: decoded.userId }
+            where: { id: decoded.userId },
+            include: { role: true }
         });
 
-        if (!user) {
-            return NextResponse.json({ error: "Пользователь не найден" }, { status: 401 });
-        }
+        if (!user) return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 });
 
-        if (user.is_block) {
-            return NextResponse.json({ error: "Аккаунт заблокирован" }, { status: 403 });
-        }
+        return NextResponse.json({
+            firstName: user.first_name,
+            lastName: user.last_name,
+            roleName: user.role?.name || 'admin', // Защита на случай, если роли нет
+            email: user.email
+        }, { status: 200 });
 
-        if (user.role_id !== 1 && user.role_id !== 3) {
-            return NextResponse.json({ error: "Доступ запрещен" }, { status: 403 });
-        }
-
-        const { password_hash, reset_token, ...safeAdmin } = user;
-
-        return NextResponse.json({ authenticated: true, admin: safeAdmin }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ error: "Ошибка валидации токена" }, { status: 401 });
+        console.error('Admin Auth Me Error:', error);
+        return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
     }
 }
