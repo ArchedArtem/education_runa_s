@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './courses.module.scss';
+import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type Course = {
     id: number;
@@ -22,8 +24,11 @@ export default function AdminCoursesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [courseToDelete, setCourseToDelete] = useState<{ id: number; title: string } | null>(null);
+
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchCoursesAndRole = async () => {
@@ -34,7 +39,7 @@ export default function AdminCoursesPage() {
                 const roleRes = await fetch('/api/admin/auth/me', { headers });
                 if (roleRes.ok) {
                     const roleData = await roleRes.json();
-                    setUserRole(roleData.roleName?.toLowerCase() || 'Moderator');
+                    setUserRole(roleData.roleName?.toLowerCase() || 'moderator');
                 }
 
                 const res = await fetch('/api/admin/courses', { headers });
@@ -43,37 +48,47 @@ export default function AdminCoursesPage() {
                 setCourses(data);
             } catch (error) {
                 console.error(error);
-                alert('Не удалось загрузить список курсов');
+                showToast('Не удалось загрузить список курсов', 'error');
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchCoursesAndRole();
-    }, []);
+    }, [showToast]);
 
-    const handleDelete = async (id: number, title: string) => {
-        const confirmDelete = window.confirm(`Вы действительно хотите удалить курс "${title}"? Все уроки внутри него также будут удалены.`);
+    const confirmDelete = (id: number, title: string) => {
+        setCourseToDelete({ id, title });
+        setIsDeleteModalOpen(true);
+    };
 
-        if (!confirmDelete) return;
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setCourseToDelete(null);
+    };
+
+    const executeDelete = async () => {
+        if (!courseToDelete) return;
 
         try {
             const token = localStorage.getItem('token');
             const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-            const res = await fetch(`/api/admin/courses/${id}`, {
+            const res = await fetch(`/api/admin/courses/${courseToDelete.id}`, {
                 method: 'DELETE',
                 headers,
             });
 
             if (!res.ok) throw new Error('Ошибка при удалении');
 
-            setCourses(courses.filter(course => course.id !== id));
-            alert('Курс удален!');
-
+            setCourses(courses.filter(course => course.id !== courseToDelete.id));
+            showToast('Курс успешно удален', 'success');
         } catch (error) {
             console.error(error);
-            alert('Произошла ошибка при удалении курса');
+            showToast('Произошла ошибка при удалении курса', 'error');
+        } finally {
+            setIsDeleteModalOpen(false);
+            setCourseToDelete(null);
         }
     };
 
@@ -92,6 +107,18 @@ export default function AdminCoursesPage() {
 
     return (
         <div className={`${styles.container} animate-in fade-in duration-300`}>
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="Удаление курса"
+                message={`Вы действительно хотите безвозвратно удалить курс "${courseToDelete?.title}"? Все уроки и прогресс клиентов будут уничтожены.`}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                onConfirm={executeDelete}
+                onCancel={cancelDelete}
+                isDangerous={true}
+            />
+
             <section className={styles.header}>
                 <div>
                     <h1 className={styles.title}>Курсы и Уроки</h1>
@@ -206,7 +233,7 @@ export default function AdminCoursesPage() {
 
                                 {userRole === 'admin' && (
                                     <button
-                                        onClick={() => handleDelete(course.id, course.title)}
+                                        onClick={() => confirmDelete(course.id, course.title)}
                                         className={`${styles.actionButton} ${styles.delete}`}
                                     >
                                         <span className={`material-symbols-outlined ${styles.actionIcon}`}>delete</span>

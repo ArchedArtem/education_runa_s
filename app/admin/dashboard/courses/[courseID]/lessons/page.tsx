@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from './lessons.module.scss';
+import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
 
 type LessonItem = {
     id: number;
@@ -25,6 +26,9 @@ export default function AdminLessonsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [lessonToDelete, setLessonToDelete] = useState<{ id: number; title: string } | null>(null);
+
     useEffect(() => {
         const fetchLessons = async () => {
             try {
@@ -45,27 +49,41 @@ export default function AdminLessonsPage() {
         }
     }, [courseId]);
 
-    const handleDelete = async (lessonId: number, lessonTitle: string) => {
-        if (confirm(`Вы действительно хотите удалить урок "${lessonTitle}"?\nЭто действие необратимо и удалит все материалы и тесты к уроку.`)) {
-            try {
-                const res = await fetch(`/api/admin/courses/${courseId}/lessons/${lessonId}`, {
-                    method: 'DELETE'
-                });
+    const confirmDelete = (id: number, title: string) => {
+        setLessonToDelete({ id, title });
+        setIsDeleteModalOpen(true);
+    };
 
-                if (!res.ok) throw new Error('Ошибка при удалении урока');
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setLessonToDelete(null);
+    };
 
-                const lessonToDelete = lessons.find(l => l.id === lessonId);
-                if (lessonToDelete) {
-                    setLessons(prev =>
-                        prev
-                            .filter(l => l.id !== lessonId)
-                            .map(l => l.order > lessonToDelete.order ? { ...l, order: l.order - 1 } : l)
-                    );
-                }
+    const executeDelete = async () => {
+        if (!lessonToDelete) return;
 
-            } catch (error) {
-                alert('Не удалось удалить урок. Проверьте консоль.');
+        try {
+            const res = await fetch(`/api/admin/courses/${courseId}/lessons/${lessonToDelete.id}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) throw new Error('Ошибка при удалении урока');
+
+            const deletedLesson = lessons.find(l => l.id === lessonToDelete.id);
+            if (deletedLesson) {
+                setLessons(prev =>
+                    prev
+                        .filter(l => l.id !== lessonToDelete.id)
+                        .map(l => l.order > deletedLesson.order ? { ...l, order: l.order - 1 } : l)
+                );
             }
+
+        } catch (error) {
+            console.error(error);
+            alert('Не удалось удалить урок. Проверьте консоль.');
+        } finally {
+            setIsDeleteModalOpen(false);
+            setLessonToDelete(null);
         }
     };
 
@@ -86,6 +104,17 @@ export default function AdminLessonsPage() {
 
     return (
         <div className={styles.pageContainer}>
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="Удаление урока"
+                message={`Вы действительно хотите безвозвратно удалить урок "${lessonToDelete?.title}"? Все материалы, видео и тесты к этому уроку будут уничтожены.`}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                onConfirm={executeDelete}
+                onCancel={cancelDelete}
+                isDangerous={true}
+            />
+
             <section className={styles.headerSection}>
                 <div className={styles.titleGroup}>
                     <div className={styles.titleRow}>
@@ -174,7 +203,7 @@ export default function AdminLessonsPage() {
                                     Ред.
                                 </Link>
                                 <button
-                                    onClick={() => handleDelete(lesson.id, lesson.title)}
+                                    onClick={() => confirmDelete(lesson.id, lesson.title)}
                                     className={styles.deleteBtn}
                                 >
                                     <span className="material-symbols-outlined">delete</span>
