@@ -1,6 +1,7 @@
 "use client";
 
-import {useState, useEffect} from 'react';
+import {useState, useEffect, Suspense} from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './users.module.scss';
 import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
 import { useToast } from '@/app/components/Providers/ToastProvider';
@@ -23,9 +24,12 @@ type UserType = {
     created_at: string;
 };
 
-export default function AdminUsersPage() {
+function UsersPageContent() {
+    const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'users' | 'invites'>('users');
-    const [searchQuery, setSearchQuery] = useState('');
+
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
     const [roleFilter, setRoleFilter] = useState('All');
     const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -56,6 +60,14 @@ export default function AdminUsersPage() {
     const { showToast } = useToast();
 
     useEffect(() => {
+        const query = searchParams.get('search');
+        if (query !== null) {
+            setSearchQuery(query);
+            setActiveTab('users');
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
         const fetchRole = async () => {
             const token = localStorage.getItem('token');
             const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -63,7 +75,7 @@ export default function AdminUsersPage() {
                 const res = await fetch('/api/admin/auth/me', { headers });
                 if (res.ok) {
                     const data = await res.json();
-                    setUserRole(data.roleName);
+                    setUserRole(data.user?.role?.name || data.roleName);
                 }
             } catch (err) {}
         };
@@ -83,7 +95,8 @@ export default function AdminUsersPage() {
         const matchesSearch =
             user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (user.company_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-            user.first_name.toLowerCase().includes(searchQuery.toLowerCase());
+            user.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.last_name.toLowerCase().includes(searchQuery.toLowerCase());
 
         const roleName = getRoleName(user.role_id);
         const matchesRole = roleFilter === 'All' || roleName === roleFilter;
@@ -298,7 +311,6 @@ export default function AdminUsersPage() {
 
     return (
         <div className={styles.pageContainer}>
-
             <ConfirmModal
                 isOpen={isDeleteInviteModalOpen}
                 title="Удаление кода доступа"
@@ -822,5 +834,13 @@ export default function AdminUsersPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AdminUsersPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><span className="material-symbols-outlined animate-spin text-3xl text-blue-600">autorenew</span></div>}>
+            <UsersPageContent />
+        </Suspense>
     );
 }

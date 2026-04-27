@@ -68,7 +68,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 <AdminSidebar isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
 
                 <main className="flex-1 md:ml-64 min-h-screen flex flex-col w-full min-w-0 relative">
-                    {/*<AdminHeader setIsOpen={setIsMobileMenuOpen} />*/}
+                    <AdminHeader setIsOpen={setIsMobileMenuOpen} />
 
                     <div className="flex-1 overflow-x-hidden p-4 md:p-0">
                         {children}
