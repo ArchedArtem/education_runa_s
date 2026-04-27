@@ -14,6 +14,15 @@
   }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}
+
 .stickyHeader {
   position: sticky;
   top: 0;
@@ -525,8 +534,9 @@
   background-color: #f59e0b;
   color: #fff;
   border: none;
-  padding: 0rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  height: 3rem;
   font-weight: 700;
   font-size: 14px;
   display: flex;
@@ -534,9 +544,89 @@
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
+  box-sizing: border-box;
+
+  span {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+  }
 
   &:hover {
     background-color: #d97706;
+  }
+}
+
+.btnAI {
+  background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  height: 3rem;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.3);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+
+  span {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px -1px rgba(168, 85, 247, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btnAIsmall {
+  background: #fdf4ff;
+  color: #a855f7;
+  border: 1px solid #e879f9;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  height: 3rem;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+
+  span {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+  }
+
+  &:hover:not(:disabled) {
+    background: #fae8ff;
+    color: #9333ea;
+    border-color: #d946ef;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 }
 
@@ -713,31 +803,31 @@
 }
 
 .btnAddQuestionDashed {
-  width: 100%;
   border: 2px dashed #cbd5e1;
   border-radius: 0.75rem;
-  padding: 1.25rem;
+  padding: 0.75rem 1rem;
+  height: 3rem;
   color: #64748b;
   font-weight: 700;
+  font-size: 14px;
   background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+
+  span {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+  }
 
   &:hover {
     border-color: #f59e0b;
     color: #d97706;
     background: #fffbeb;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }

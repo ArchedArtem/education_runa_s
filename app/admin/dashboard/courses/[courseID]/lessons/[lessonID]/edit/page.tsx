@@ -26,6 +26,7 @@ export default function EditLessonPage() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     const tabParam = searchParams.get('tab') as 'main' | 'files' | 'test';
     const [activeTab, setActiveTab] = useState<'main' | 'files' | 'test'>(
@@ -148,6 +149,49 @@ export default function EditLessonPage() {
         }));
     };
 
+    const handleGenerateAITest = async () => {
+        if (!lessonData.content || lessonData.content.trim() === '' || lessonData.content === '<p><br></p>') {
+            showToast('Сначала заполните текстовый конспект урока!', 'warning');
+            return;
+        }
+
+        setIsGeneratingAI(true);
+        try {
+            const res = await fetch('/api/admin/ai/generate-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: lessonData.content })
+            });
+
+            if (!res.ok) throw new Error('Ошибка генерации');
+
+            const data = await res.json();
+
+            const generatedQuestions = data.questions.map((q: any) => ({
+                id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                text: q.text,
+                type: q.type,
+                options: q.options.map((opt: any) => ({
+                    id: `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    text: opt.text,
+                    isCorrect: opt.isCorrect
+                }))
+            }));
+
+            setTestData(prev => ({
+                ...prev,
+                isEnabled: true,
+                questions: [...prev.questions, ...generatedQuestions]
+            }));
+
+            showToast('ИИ успешно сгенерировал тест!', 'success');
+        } catch (error) {
+            showToast('Ошибка при генерации теста ИИ', 'error');
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+
     const handleSave = async () => {
         if (!lessonData.title.trim()) {
             showToast('Пожалуйста, введите название урока!', 'warning');
@@ -222,7 +266,7 @@ export default function EditLessonPage() {
 
     if (isLoading) {
         return (
-            <div className={`${styles.pageContainer} flex items-center justify-center min-h-[50vh]`}>
+            <div className={`${styles.container} flex items-center justify-center min-h-[50vh]`}>
                 <div className="flex flex-col items-center text-slate-400 gap-3">
                     <span className="material-symbols-outlined animate-spin text-4xl">autorenew</span>
                     <p className="font-medium">Загрузка данных урока...</p>
@@ -232,7 +276,7 @@ export default function EditLessonPage() {
     }
 
     return (
-        <div className={styles.pageContainer}>
+        <div className={styles.container}>
             <section className={styles.stickyHeader}>
                 <div className={styles.headerInfo}>
                     <h1 className={styles.pageTitle}>Редактирование урока</h1>
@@ -240,8 +284,10 @@ export default function EditLessonPage() {
 
                 <div className={styles.headerActions}>
                     <button onClick={() => router.back()} className={styles.btnSecondary}>Отмена</button>
-                    <button onClick={handleSave} disabled={isSaving} className={styles.btnPrimary}>
-                        <span className="material-symbols-outlined">{isSaving ? 'autorenew' : 'save'}</span>
+                    <button onClick={handleSave} disabled={isSaving || isGeneratingAI} className={styles.btnPrimary}>
+                        <span className={`material-symbols-outlined ${isSaving ? styles.spinIcon : ''}`}>
+                            {isSaving ? 'autorenew' : 'save'}
+                        </span>
                         {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
                     </button>
                 </div>
@@ -249,11 +295,19 @@ export default function EditLessonPage() {
 
             <section className={styles.tabsNav}>
                 <div className={styles.tabsList}>
-                    <button onClick={() => setActiveTab('main')} className={`${styles.tabItem} ${activeTab === 'main' ? styles.tabActive : ''}`}>Основной контент</button>
-                    <button onClick={() => setActiveTab('files')} className={`${styles.tabItem} ${activeTab === 'files' ? styles.tabActive : ''}`}>
-                        Материалы {(existingMaterials.length + newFiles.length) > 0 && <span className={styles.badge}>{existingMaterials.length + newFiles.length}</span>}
+                    <button onClick={() => setActiveTab('main')} className={`${styles.tabItem} ${activeTab === 'main' ? styles.tabActive : ''}`}>
+                        <span className="material-symbols-outlined">article</span>
+                        <span className={styles.tabText}>Контент</span>
                     </button>
-                    <button onClick={() => setActiveTab('test')} className={`${styles.tabItem} ${activeTab === 'test' ? styles.tabActive : ''}`}>Тестирование</button>
+                    <button onClick={() => setActiveTab('files')} className={`${styles.tabItem} ${activeTab === 'files' ? styles.tabActive : ''}`}>
+                        <span className="material-symbols-outlined">attach_file</span>
+                        <span className={styles.tabText}>Материалы</span>
+                        {(existingMaterials.length + newFiles.length) > 0 && <span className={styles.badge}>{existingMaterials.length + newFiles.length}</span>}
+                    </button>
+                    <button onClick={() => setActiveTab('test')} className={`${styles.tabItem} ${activeTab === 'test' ? styles.tabActive : ''}`}>
+                        <span className="material-symbols-outlined">quiz</span>
+                        <span className={styles.tabText}>Тест</span>
+                    </button>
                 </div>
             </section>
 
@@ -263,7 +317,7 @@ export default function EditLessonPage() {
                         <div className={styles.card}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Название урока <span>*</span></label>
-                                <input type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} className={styles.textInput}/>
+                                <input type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} className={styles.textInput} placeholder="Например: Введение в интерфейс 1С"/>
                             </div>
 
                             <div className={styles.videoSection}>
@@ -278,12 +332,13 @@ export default function EditLessonPage() {
                                 {lessonData.videoType === 'link' ? (
                                     <div className={styles.inputWithIcon}>
                                         <span className="material-symbols-outlined">link</span>
-                                        <input type="url" value={lessonData.videoUrl} onChange={e => setLessonData({...lessonData, videoUrl: e.target.value})} className={styles.textInput} />
+                                        <input type="url" value={lessonData.videoUrl} onChange={e => setLessonData({...lessonData, videoUrl: e.target.value})} className={styles.textInput} placeholder="https://youtube.com/..."/>
                                     </div>
                                 ) : (
                                     <div className={styles.uploadBox} onClick={() => videoInputRef.current?.click()}>
                                         <span className="material-symbols-outlined">video_library</span>
                                         <p className={styles.uploadTitle}>{videoFile ? videoFile.name : 'Выбрать новое видео'}</p>
+                                        <p className={styles.uploadHint}>{videoFile ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB` : 'MP4, WebM (до 2 ГБ)'}</p>
                                         <input type="file" accept="video/mp4, video/webm" className={styles.hiddenInput} ref={videoInputRef} onChange={handleVideoSelect} />
                                     </div>
                                 )}
@@ -382,12 +437,12 @@ export default function EditLessonPage() {
                             <div className="mt-8 space-y-3 max-w-3xl mx-auto w-full">
                                 <h3 className="font-bold text-slate-900">Текущие файлы</h3>
                                 {existingMaterials.map(file => (
-                                    <div key={file.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <div key={file.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined">description</span></div>
+                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined">description</span></div>
                                             <p className="font-bold text-sm text-slate-900">{file.name}</p>
                                         </div>
-                                        <button onClick={() => removeExistingMaterial(file.id)} className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50">
+                                        <button onClick={() => removeExistingMaterial(file.id)} className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
                                             <span className="material-symbols-outlined">delete</span>
                                         </button>
                                     </div>
@@ -399,12 +454,12 @@ export default function EditLessonPage() {
                             <div className="mt-4 space-y-3 max-w-3xl mx-auto w-full">
                                 <h3 className="font-bold text-slate-900">Новые файлы к загрузке</h3>
                                 {newFiles.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-4 bg-white border border-green-200 rounded-xl">
+                                    <div key={index} className="flex items-center justify-between p-4 bg-white border border-green-200 rounded-xl hover:border-green-300 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined">upload_file</span></div>
                                             <p className="font-bold text-sm text-slate-900">{file.name}</p>
                                         </div>
-                                        <button onClick={() => removeNewFile(index)} className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50">
+                                        <button onClick={() => removeNewFile(index)} className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
                                             <span className="material-symbols-outlined">close</span>
                                         </button>
                                     </div>
@@ -425,6 +480,7 @@ export default function EditLessonPage() {
                             </label>
                             <div className={styles.testTitleInfo}>
                                 <h3 className={styles.cardTitleInline}>Тестирование после урока</h3>
+                                <p className={styles.switchSub}>Обязателен для завершения урока</p>
                             </div>
                         </div>
 
@@ -440,7 +496,21 @@ export default function EditLessonPage() {
                         <div className={styles.questionsList}>
                             {testData.questions.length === 0 ? (
                                 <div className={styles.emptyState}>
-                                    <button onClick={handleAddQuestion} className={styles.btnAmber}><span className="material-symbols-outlined">add</span> Добавить вопрос</button>
+                                    <span className="material-symbols-outlined">quiz</span>
+                                    <h3>Вопросов пока нет</h3>
+                                    <p>Создайте первый вопрос для проверки знаний или доверьте это ИИ</p>
+                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                        <button onClick={handleAddQuestion} className={styles.btnAmber}>
+                                            <span className="material-symbols-outlined">add</span>
+                                            Добавить вручную
+                                        </button>
+                                        <button onClick={handleGenerateAITest} disabled={isGeneratingAI} className={styles.btnAI}>
+                                            <span className={`material-symbols-outlined ${isGeneratingAI ? styles.spinIcon : ''}`}>
+                                                {isGeneratingAI ? 'autorenew' : 'auto_awesome'}
+                                            </span>
+                                            {isGeneratingAI ? 'Генерация ИИ...' : 'Сгенерировать ИИ'}
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -467,7 +537,7 @@ export default function EditLessonPage() {
                                                         <button onClick={() => { const newQ = [...testData.questions]; if (q.type === 'single') newQ[index].options.forEach(o => o.isCorrect = false); newQ[index].options[optIndex].isCorrect = !opt.isCorrect; setTestData({...testData, questions: newQ}); }} className={`${styles.checkBtn} ${opt.isCorrect ? styles.checked : ''}`}>
                                                             <span className="material-symbols-outlined">check</span>
                                                         </button>
-                                                        <input type="text" value={opt.text} onChange={e => { const newQ = [...testData.questions]; newQ[index].options[optIndex].text = e.target.value; setTestData({...testData, questions: newQ}); }} className={styles.optionInput} />
+                                                        <input type="text" value={opt.text} onChange={e => { const newQ = [...testData.questions]; newQ[index].options[optIndex].text = e.target.value; setTestData({...testData, questions: newQ}); }} className={styles.optionInput} placeholder={`Вариант ${optIndex + 1}`} />
                                                         <button onClick={() => { const newQ = [...testData.questions]; newQ[index].options = newQ[index].options.filter(o => o.id !== opt.id); setTestData({...testData, questions: newQ}); }} className={styles.btnRemoveOpt}>
                                                             <span className="material-symbols-outlined">close</span>
                                                         </button>
@@ -477,7 +547,18 @@ export default function EditLessonPage() {
                                             </div>
                                         </div>
                                     ))}
-                                    <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed}><span className="material-symbols-outlined">add</span> Добавить вопрос</button>
+                                    <div style={{ display: 'flex', marginTop: '1rem', gap: '1rem' }}>
+                                        <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed} style={{ flex: 1 }}>
+                                            <span className="material-symbols-outlined">add</span>
+                                            Добавить следующий
+                                        </button>
+                                        <button onClick={handleGenerateAITest} disabled={isGeneratingAI} className={styles.btnAIsmall}>
+                                            <span className={`material-symbols-outlined ${isGeneratingAI ? styles.spinIcon : ''}`}>
+                                                {isGeneratingAI ? 'autorenew' : 'auto_awesome'}
+                                            </span>
+                                            Сгенерировать ИИ
+                                        </button>
+                                    </div>
                                 </>
                             )}
                         </div>

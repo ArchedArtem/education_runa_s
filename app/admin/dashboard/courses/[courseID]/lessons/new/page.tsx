@@ -37,6 +37,7 @@ export default function NewLessonPage() {
 
     const [activeTab, setActiveTab] = useState<'main' | 'files' | 'test'>('main');
     const [isSaving, setIsSaving] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     const [lessonData, setLessonData] = useState(INITIAL_LESSON);
     const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -90,6 +91,49 @@ export default function NewLessonPage() {
                 return q;
             })
         }));
+    };
+
+    const handleGenerateAITest = async () => {
+        if (!lessonData.content || lessonData.content.trim() === '' || lessonData.content === '<p><br></p>') {
+            showToast('Сначала заполните текстовый конспект урока!', 'warning');
+            return;
+        }
+
+        setIsGeneratingAI(true);
+        try {
+            const res = await fetch('/api/admin/ai/generate-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: lessonData.content })
+            });
+
+            if (!res.ok) throw new Error('Ошибка генерации');
+
+            const data = await res.json();
+
+            const generatedQuestions = data.questions.map((q: any) => ({
+                id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                text: q.text,
+                type: q.type,
+                options: q.options.map((opt: any) => ({
+                    id: `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    text: opt.text,
+                    isCorrect: opt.isCorrect
+                }))
+            }));
+
+            setTestData(prev => ({
+                ...prev,
+                isEnabled: true,
+                questions: [...prev.questions, ...generatedQuestions]
+            }));
+
+            showToast('ИИ успешно сгенерировал тест!', 'success');
+        } catch (error) {
+            showToast('Ошибка при генерации теста ИИ', 'error');
+        } finally {
+            setIsGeneratingAI(false);
+        }
     };
 
     const handleSave = async () => {
@@ -183,8 +227,8 @@ export default function NewLessonPage() {
                     <button onClick={() => router.back()} className={styles.btnSecondary}>
                         Отмена
                     </button>
-                    <button onClick={handleSave} disabled={isSaving} className={styles.btnPrimary}>
-                        <span className="material-symbols-outlined">
+                    <button onClick={handleSave} disabled={isSaving || isGeneratingAI} className={styles.btnPrimary}>
+                        <span className={`material-symbols-outlined ${isSaving ? styles.spinIcon : ''}`}>
                             {isSaving ? 'autorenew' : 'add_circle'}
                         </span>
                         {isSaving ? 'Сохранение...' : 'Создать урок'}
@@ -466,11 +510,19 @@ export default function NewLessonPage() {
                                 <div className={styles.emptyState}>
                                     <span className="material-symbols-outlined">quiz</span>
                                     <h3>Вопросов пока нет</h3>
-                                    <p>Создайте первый вопрос для проверки знаний</p>
-                                    <button onClick={handleAddQuestion} className={styles.btnAmber}>
-                                        <span className="material-symbols-outlined">add</span>
-                                        Добавить вопрос
-                                    </button>
+                                    <p>Создайте первый вопрос для проверки знаний или доверьте это ИИ</p>
+                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                        <button onClick={handleAddQuestion} className={styles.btnAmber}>
+                                            <span className="material-symbols-outlined">add</span>
+                                            Добавить вручную
+                                        </button>
+                                        <button onClick={handleGenerateAITest} disabled={isGeneratingAI} className={styles.btnAI}>
+                                            <span className={`material-symbols-outlined ${isGeneratingAI ? styles.spinIcon : ''}`}>
+                                                {isGeneratingAI ? 'autorenew' : 'auto_awesome'}
+                                            </span>
+                                            {isGeneratingAI ? 'Генерация ИИ...' : 'Сгенерировать ИИ'}
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -572,10 +624,18 @@ export default function NewLessonPage() {
                                             </div>
                                         </div>
                                     ))}
-                                    <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed}>
-                                        <span className="material-symbols-outlined">add</span>
-                                        Добавить следующий вопрос
-                                    </button>
+                                    <div style={{ display: 'flex', marginTop: '1rem', gap: '1rem' }}>
+                                        <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed} style={{ flex: 1 }}>
+                                            <span className="material-symbols-outlined">add</span>
+                                            Добавить следующий
+                                        </button>
+                                        <button onClick={handleGenerateAITest} disabled={isGeneratingAI} className={styles.btnAIsmall}>
+                                            <span className={`material-symbols-outlined ${isGeneratingAI ? styles.spinIcon : ''}`}>
+                                                {isGeneratingAI ? 'autorenew' : 'auto_awesome'}
+                                            </span>
+                                            Сгенерировать ИИ
+                                        </button>
+                                    </div>
                                 </>
                             )}
                         </div>
