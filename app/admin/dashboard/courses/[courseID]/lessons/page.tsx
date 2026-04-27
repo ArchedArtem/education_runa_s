@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from './lessons.module.scss';
 import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type LessonItem = {
     id: number;
@@ -29,6 +30,8 @@ export default function AdminLessonsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [lessonToDelete, setLessonToDelete] = useState<{ id: number; title: string } | null>(null);
 
+    const { showToast } = useToast();
+
     useEffect(() => {
         const fetchLessons = async () => {
             try {
@@ -38,7 +41,7 @@ export default function AdminLessonsPage() {
                 setLessons(data);
             } catch (error) {
                 console.error(error);
-                alert('Не удалось загрузить список уроков');
+                showToast('Не удалось загрузить список уроков', 'error');
             } finally {
                 setIsLoading(false);
             }
@@ -47,7 +50,7 @@ export default function AdminLessonsPage() {
         if (courseId) {
             fetchLessons();
         }
-    }, [courseId]);
+    }, [courseId, showToast]);
 
     const confirmDelete = (id: number, title: string) => {
         setLessonToDelete({ id, title });
@@ -77,10 +80,11 @@ export default function AdminLessonsPage() {
                         .map(l => l.order > deletedLesson.order ? { ...l, order: l.order - 1 } : l)
                 );
             }
+            showToast('Урок успешно удален', 'success');
 
         } catch (error) {
             console.error(error);
-            alert('Не удалось удалить урок. Проверьте консоль.');
+            showToast('Не удалось удалить урок. Проверьте консоль.', 'error');
         } finally {
             setIsDeleteModalOpen(false);
             setLessonToDelete(null);

@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import styles from './edit-course.module.scss';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 export default function EditCoursePage() {
     const router = useRouter();
     const params = useParams();
     const courseId = params.courseID as string;
+    const { showToast } = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -44,7 +46,7 @@ export default function EditCoursePage() {
                 setPreviewImage(data.thumbnail_url || null);
             } catch (error) {
                 console.error(error);
-                alert('Не удалось загрузить данные курса');
+                showToast('Не удалось загрузить данные курса', 'error');
                 router.push('/admin/dashboard/courses');
             } finally {
                 setIsLoading(false);
@@ -54,7 +56,7 @@ export default function EditCoursePage() {
         if (courseId) {
             fetchCourse();
         }
-    }, [courseId, router]);
+    }, [courseId, router, showToast]);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -73,7 +75,7 @@ export default function EditCoursePage() {
 
     const handleSave = async () => {
         if (!courseData.title || !courseData.softwareProduct) {
-            alert('Пожалуйста, заполните обязательные поля (Название и Продукт 1С)');
+            showToast('Пожалуйста, заполните обязательные поля (Название и Продукт 1С)', 'warning');
             return;
         }
 
@@ -115,12 +117,12 @@ export default function EditCoursePage() {
 
             if (!response.ok) throw new Error('Ошибка сохранения изменений в БД');
 
-            alert('Изменения успешно сохранены!');
+            showToast('Изменения успешно сохранены!', 'success');
             router.push('/admin/dashboard/courses');
 
         } catch (err) {
             console.error(err);
-            alert('Произошла ошибка при сохранении курса');
+            showToast('Произошла ошибка при сохранении курса', 'error');
         } finally {
             setIsSaving(false);
         }

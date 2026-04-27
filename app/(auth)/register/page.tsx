@@ -3,9 +3,11 @@ import Link from 'next/link';
 import styles from './register.module.scss';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from "react";
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 export default function RegisterPage() {
     const router = useRouter();
+    const { showToast } = useToast();
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -68,7 +70,7 @@ export default function RegisterPage() {
                 throw new Error(data.error || 'Что-то пошло не так. Проверьте данные.');
             }
 
-            alert('Регистрация успешна! Теперь вы можете войти.');
+            showToast('Регистрация успешна! Теперь вы можете войти.', 'success');
             router.push('/login');
 
         } catch (err: any) {

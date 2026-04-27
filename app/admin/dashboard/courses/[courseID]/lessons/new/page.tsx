@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import styles from './new-lesson.module.scss';
 import 'react-quill-new/dist/quill.snow.css';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
@@ -30,6 +31,7 @@ export default function NewLessonPage() {
     const router = useRouter();
     const params = useParams();
     const courseId = params.courseID as string;
+    const { showToast } = useToast();
 
     const [isHtmlMode, setIsHtmlMode] = useState(false);
 
@@ -92,13 +94,13 @@ export default function NewLessonPage() {
 
     const handleSave = async () => {
         if (!lessonData.title.trim()) {
-            alert('Пожалуйста, введите название урока!');
+            showToast('Пожалуйста, введите название урока!', 'warning');
             setActiveTab('main');
             return;
         }
 
         if (testData.isEnabled && testData.questions.length === 0) {
-            alert('Вы включили тест, но не добавили ни одного вопроса.');
+            showToast('Вы включили тест, но не добавили ни одного вопроса.', 'warning');
             setActiveTab('test');
             return;
         }
@@ -159,11 +161,11 @@ export default function NewLessonPage() {
 
             if (!response.ok) throw new Error('Ошибка при сохранении урока.');
 
-            alert('Новый урок успешно создан!');
+            showToast('Новый урок успешно создан!', 'success');
             router.push(`/admin/dashboard/courses/${courseId}/lessons`);
 
         } catch (err) {
-            alert('Произошла ошибка при сохранении урока.');
+            showToast('Произошла ошибка при сохранении урока.', 'error');
         } finally {
             setIsSaving(false);
         }

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './tests.module.scss';
+import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type TestRecord = {
     id: number;
@@ -23,43 +25,64 @@ export default function AdminTestsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [courseFilter, setCourseFilter] = useState('All');
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [testToDelete, setTestToDelete] = useState<{ id: number; title: string } | null>(null);
+
+    const { showToast } = useToast();
+
     useEffect(() => {
+        const fetchTests = async () => {
+            setIsLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const res = await fetch('/api/admin/tests', { headers });
+                if (!res.ok) throw new Error('Ошибка загрузки тестов');
+
+                const data = await res.json();
+                setTests(data);
+            } catch (error) {
+                console.error(error);
+                showToast('Не удалось загрузить тесты', 'error');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchTests();
-    }, []);
+    }, [showToast]);
 
-    const fetchTests = async () => {
-        setIsLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const res = await fetch('/api/admin/tests', { headers });
-            if (!res.ok) throw new Error('Ошибка загрузки тестов');
-
-            const data = await res.json();
-            setTests(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
+    const confirmDelete = (id: number, title: string) => {
+        setTestToDelete({ id, title });
+        setIsDeleteModalOpen(true);
     };
 
-    const handleDelete = async (testId: number) => {
-        if (!confirm('Вы уверены, что хотите удалить этот тест? Он будет удален из урока.')) return;
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setTestToDelete(null);
+    };
+
+    const executeDelete = async () => {
+        if (!testToDelete) return;
 
         try {
             const token = localStorage.getItem('token');
             const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-            const res = await fetch(`/api/admin/tests?id=${testId}`, { method: 'DELETE', headers });
+            const res = await fetch(`/api/admin/tests?id=${testToDelete.id}`, { method: 'DELETE', headers });
             if (res.ok) {
-                setTests(prev => prev.filter(t => t.id !== testId));
+                setTests(prev => prev.filter(t => t.id !== testToDelete.id));
+                showToast('Тест успешно удален', 'success');
             } else {
-                alert('Ошибка при удалении');
+                showToast('Ошибка при удалении', 'error');
             }
         } catch (error) {
             console.error(error);
+            showToast('Произошла ошибка при удалении', 'error');
+        } finally {
+            setIsDeleteModalOpen(false);
+            setTestToDelete(null);
         }
     };
 
@@ -78,6 +101,17 @@ export default function AdminTestsPage() {
 
     return (
         <div className={styles.pageWrapper}>
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="Удаление теста"
+                message={`Вы уверены, что хотите удалить тест "${testToDelete?.title}"? Он будет безвозвратно удален из урока.`}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                onConfirm={executeDelete}
+                onCancel={cancelDelete}
+                isDangerous={true}
+            />
+
             <section className={styles.headerSection}>
                 <h1>База тестов</h1>
                 <p>Управление тестированиями, привязанными к урокам.</p>
@@ -169,7 +203,7 @@ export default function AdminTestsPage() {
                                     <button
                                         className={styles.btnDelete}
                                         title="Удалить тест"
-                                        onClick={() => handleDelete(test.id)}
+                                        onClick={() => confirmDelete(test.id, test.title)}
                                     >
                                         <span className="material-symbols-outlined">delete</span>
                                     </button>

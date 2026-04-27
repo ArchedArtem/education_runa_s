@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import styles from './edit-lesson.module.scss';
 import 'react-quill-new/dist/quill.snow.css';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
@@ -16,6 +17,7 @@ export default function EditLessonPage() {
     const router = useRouter();
     const params = useParams();
     const searchParams = useSearchParams();
+    const { showToast } = useToast();
 
     const [isHtmlMode, setIsHtmlMode] = useState(false);
 
@@ -95,7 +97,7 @@ export default function EditLessonPage() {
                 }
             } catch (err) {
                 console.error(err);
-                alert('Не удалось загрузить данные урока');
+                showToast('Не удалось загрузить данные урока', 'error');
                 router.push(`/admin/dashboard/courses/${courseId}/lessons`);
             } finally {
                 setIsLoading(false);
@@ -103,7 +105,7 @@ export default function EditLessonPage() {
         };
 
         if (lessonId) fetchLesson();
-    }, [courseId, lessonId, router]);
+    }, [courseId, lessonId, router, showToast]);
 
     const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -147,8 +149,17 @@ export default function EditLessonPage() {
     };
 
     const handleSave = async () => {
-        if (!lessonData.title.trim()) return alert('Пожалуйста, введите название урока!');
-        if (testData.isEnabled && testData.questions.length === 0) return alert('Добавьте хотя бы один вопрос в тест.');
+        if (!lessonData.title.trim()) {
+            showToast('Пожалуйста, введите название урока!', 'warning');
+            setActiveTab('main');
+            return;
+        }
+
+        if (testData.isEnabled && testData.questions.length === 0) {
+            showToast('Добавьте хотя бы один вопрос в тест.', 'warning');
+            setActiveTab('test');
+            return;
+        }
 
         setIsSaving(true);
         let finalVideoUrl = lessonData.videoUrl;
@@ -198,12 +209,12 @@ export default function EditLessonPage() {
 
             if (!response.ok) throw new Error('Ошибка при сохранении урока.');
 
-            alert('Изменения успешно сохранены!');
+            showToast('Изменения успешно сохранены!', 'success');
             router.push(`/admin/dashboard/courses/${courseId}/lessons`);
 
         } catch (err) {
             console.error(err);
-            alert('Произошла ошибка при сохранении урока.');
+            showToast('Произошла ошибка при сохранении урока.', 'error');
         } finally {
             setIsSaving(false);
         }

@@ -2,6 +2,8 @@
 
 import {useState, useEffect} from 'react';
 import styles from './users.module.scss';
+import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type InviteType = {
     id: number;
@@ -47,6 +49,11 @@ export default function AdminUsersPage() {
     });
 
     const [editingUser, setEditingUser] = useState<UserType | null>(null);
+
+    const [isDeleteInviteModalOpen, setIsDeleteInviteModalOpen] = useState(false);
+    const [inviteToDelete, setInviteToDelete] = useState<number | null>(null);
+
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchRole = async () => {
@@ -141,11 +148,12 @@ export default function AdminUsersPage() {
             if (res.ok) {
                 setNewInvite({code: '', description: ''});
                 setInvites(prev => [data.invite, ...prev]);
+                showToast('Пригласительный код успешно создан', 'success');
             } else {
-                alert(data.error);
+                showToast(data.error || 'Ошибка при создании кода', 'error');
             }
         } catch (e) {
-            alert('Ошибка сервера');
+            showToast('Ошибка сервера', 'error');
         } finally {
             setIsSavingInvite(false);
         }
@@ -171,20 +179,36 @@ export default function AdminUsersPage() {
             setInvites(prev => prev.map(invite =>
                 invite.id === id ? {...invite, isActive: currentStatus} : invite
             ));
+            showToast('Не удалось изменить статус', 'error');
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Вы уверены, что хотите навсегда удалить этот код?')) return;
+    const confirmDeleteInvite = (id: number) => {
+        setInviteToDelete(id);
+        setIsDeleteInviteModalOpen(true);
+    };
+
+    const cancelDeleteInvite = () => {
+        setIsDeleteInviteModalOpen(false);
+        setInviteToDelete(null);
+    };
+
+    const executeDeleteInvite = async () => {
+        if (inviteToDelete === null) return;
         const previousInvites = [...invites];
-        setInvites(prev => prev.filter(invite => invite.id !== id));
+        setInvites(prev => prev.filter(invite => invite.id !== inviteToDelete));
         try {
             const token = localStorage.getItem('token');
             const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
-            const res = await fetch(`/api/admin/invites?id=${id}`, {method: 'DELETE', headers});
+            const res = await fetch(`/api/admin/invites?id=${inviteToDelete}`, {method: 'DELETE', headers});
             if (!res.ok) throw new Error();
+            showToast('Код успешно удален', 'success');
         } catch (error) {
             setInvites(previousInvites);
+            showToast('Не удалось удалить код', 'error');
+        } finally {
+            setIsDeleteInviteModalOpen(false);
+            setInviteToDelete(null);
         }
     };
 
@@ -207,11 +231,12 @@ export default function AdminUsersPage() {
                 setUsers(prev => [data.user, ...prev]);
                 setIsUserModalOpen(false);
                 setNewUser({first_name: '', last_name: '', email: '', company_name: '', password: '', role_id: 2});
+                showToast('Пользователь успешно добавлен', 'success');
             } else {
-                alert(data.error);
+                showToast(data.error || 'Ошибка при создании пользователя', 'error');
             }
         } catch (e) {
-            alert('Ошибка сервера');
+            showToast('Ошибка сервера', 'error');
         } finally {
             setIsSavingUser(false);
         }
@@ -236,11 +261,12 @@ export default function AdminUsersPage() {
             if (res.ok) {
                 setUsers(prev => prev.map(u => u.id === editingUser.id ? data.user : u));
                 setEditingUser(null);
+                showToast('Данные пользователя обновлены', 'success');
             } else {
-                alert(data.error);
+                showToast(data.error || 'Ошибка при обновлении пользователя', 'error');
             }
         } catch (e) {
-            alert('Ошибка сервера');
+            showToast('Ошибка сервера', 'error');
         } finally {
             setIsSavingUser(false);
         }
@@ -266,12 +292,23 @@ export default function AdminUsersPage() {
             setUsers(prev => prev.map(user =>
                 user.id === id ? {...user, is_block: currentStatus} : user
             ));
-            alert('Не удалось обновить статус пользователя');
+            showToast('Не удалось обновить статус пользователя', 'error');
         }
     };
 
     return (
         <div className={styles.pageContainer}>
+
+            <ConfirmModal
+                isOpen={isDeleteInviteModalOpen}
+                title="Удаление кода доступа"
+                message="Вы уверены, что хотите навсегда удалить этот код?"
+                confirmText="Удалить"
+                cancelText="Отмена"
+                onConfirm={executeDeleteInvite}
+                onCancel={cancelDeleteInvite}
+                isDangerous={true}
+            />
 
             <section className={styles.headerSection}>
                 <div>
@@ -552,7 +589,7 @@ export default function AdminUsersPage() {
                                                         <span className="material-symbols-outlined"
                                                               style={{fontSize: '20px'}}>{invite.isActive ? 'visibility_off' : 'visibility'}</span>
                                                     </button>
-                                                    <button onClick={() => handleDelete(invite.id)}
+                                                    <button onClick={() => confirmDeleteInvite(invite.id)}
                                                             className={styles.actionBtnDanger}>
                                                         <span className="material-symbols-outlined"
                                                               style={{fontSize: '20px'}}>delete</span>
