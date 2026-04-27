@@ -24,11 +24,16 @@ export default function AdminLessonsPage() {
     const courseId = (params.courseId || params.courseID || params.id) as string;
 
     const [lessons, setLessons] = useState<LessonItem[]>([]);
+    const [originalLessons, setOriginalLessons] = useState<LessonItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [lessonToDelete, setLessonToDelete] = useState<{ id: number; title: string } | null>(null);
+
+    const [isReordering, setIsReordering] = useState(false);
+    const [isSavingOrder, setIsSavingOrder] = useState(false);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
     const { showToast } = useToast();
 
@@ -91,6 +96,62 @@ export default function AdminLessonsPage() {
         }
     };
 
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+        if (!isReordering) return;
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        if (!isReordering || draggedIndex === null || draggedIndex === index) return;
+
+        const newLessons = [...lessons];
+        const draggedLesson = newLessons[draggedIndex];
+        newLessons.splice(draggedIndex, 1);
+        newLessons.splice(index, 0, draggedLesson);
+
+        const updatedLessons = newLessons.map((lesson, idx) => ({
+            ...lesson,
+            order: idx + 1
+        }));
+
+        setLessons(updatedLessons);
+        setDraggedIndex(index);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+    };
+
+    const handleSaveOrder = async () => {
+        setIsSavingOrder(true);
+        try {
+            const res = await fetch(`/api/admin/courses/${courseId}/lessons/reorder`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lessons: lessons.map(l => ({ id: l.id, order: l.order }))
+                })
+            });
+
+            if (!res.ok) throw new Error('Ошибка при сохранении порядка');
+
+            showToast('Порядок уроков успешно сохранен', 'success');
+            setIsReordering(false);
+        } catch (err) {
+            console.error(err);
+            showToast('Не удалось сохранить порядок', 'error');
+        } finally {
+            setIsSavingOrder(false);
+        }
+    };
+
+    const handleCancelReorder = () => {
+        setLessons(originalLessons);
+        setIsReordering(false);
+    };
+
     const filteredLessons = lessons.filter(lesson =>
         lesson.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -129,17 +190,40 @@ export default function AdminLessonsPage() {
                 </div>
 
                 <div className={styles.headerActions}>
-                    <button className={styles.btnSort}>
-                        <span className="material-symbols-outlined">sort</span>
-                        Изменить порядок
-                    </button>
-                    <Link
-                        href={`/admin/dashboard/courses/${courseId}/lessons/new`}
-                        className={styles.btnCreate}
-                    >
-                        <span className="material-symbols-outlined">add</span>
-                        Новый урок
-                    </Link>
+                    {isReordering ? (
+                        <>
+                            <button onClick={handleCancelReorder} className={styles.btnSecondary}>
+                                Отмена
+                            </button>
+                            <button onClick={handleSaveOrder} disabled={isSavingOrder} className={styles.btnPrimary}>
+                                <span className={`material-symbols-outlined text-[20px] ${isSavingOrder ? styles.spinIcon : ''}`}>
+                                    {isSavingOrder ? 'autorenew' : 'save'}
+                                </span>
+                                {isSavingOrder ? 'Сохранение...' : 'Сохранить порядок'}
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => {
+                                    setOriginalLessons(lessons);
+                                    setIsReordering(true);
+                                    setSearchQuery('');
+                                }}
+                                className={styles.btnSort}
+                            >
+                                <span className="material-symbols-outlined">sort</span>
+                                Изменить порядок
+                            </button>
+                            <Link
+                                href={`/admin/dashboard/courses/${courseId}/lessons/new`}
+                                className={styles.btnCreate}
+                            >
+                                <span className="material-symbols-outlined">add</span>
+                                Новый урок
+                            </Link>
+                        </>
+                    )}
                 </div>
             </section>
 
@@ -152,16 +236,30 @@ export default function AdminLessonsPage() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={styles.searchInput}
+                        disabled={isReordering}
                     />
                 </div>
             </section>
 
             <section className={styles.lessonsList}>
                 {filteredLessons.length > 0 ? (
-                    filteredLessons.map((lesson) => (
-                        <div key={lesson.id} className={styles.lessonCard}>
+                    filteredLessons.map((lesson, index) => (
+                        <div
+                            key={lesson.id}
+                            className={`${styles.lessonCard} ${isReordering ? 'cursor-move' : ''}`}
+                            style={{
+                                opacity: draggedIndex === index ? 0.5 : 1,
+                                outline: isReordering ? '2px dashed #bfdbfe' : 'none',
+                                outlineOffset: '2px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            draggable={isReordering}
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDragEnd={handleDragEnd}
+                        >
                             <div className={styles.lessonInfo}>
-                                <div className={styles.dragHandle}>
+                                <div className={styles.dragHandle} style={{ cursor: isReordering ? 'grab' : 'default', color: isReordering ? '#2563eb' : '#cbd5e1' }}>
                                     <span className="material-symbols-outlined">drag_indicator</span>
                                 </div>
 
@@ -202,6 +300,7 @@ export default function AdminLessonsPage() {
                                 <Link
                                     href={`/admin/dashboard/courses/${courseId}/lessons/${lesson.id}/edit`}
                                     className={styles.editBtn}
+                                    style={{ pointerEvents: isReordering ? 'none' : 'auto', opacity: isReordering ? 0.5 : 1 }}
                                 >
                                     <span className="material-symbols-outlined">edit</span>
                                     Ред.
@@ -209,6 +308,8 @@ export default function AdminLessonsPage() {
                                 <button
                                     onClick={() => confirmDelete(lesson.id, lesson.title)}
                                     className={styles.deleteBtn}
+                                    disabled={isReordering}
+                                    style={{ pointerEvents: isReordering ? 'none' : 'auto', opacity: isReordering ? 0.5 : 1 }}
                                 >
                                     <span className="material-symbols-outlined">delete</span>
                                 </button>
