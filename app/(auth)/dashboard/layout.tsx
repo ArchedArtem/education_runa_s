@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import Sidebar from "@/app/(auth)/dashboard/components/Sidebar/Sidebar";
+import Header from "@/app/(auth)/dashboard/components/Header/Header";
 import Footer from "@/app/(auth)/dashboard/components/Footer/Footer";
 import styles from './page.module.scss';
 
@@ -111,20 +112,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <main className="flex-1 md:ml-64 min-h-screen flex flex-col w-full min-w-0">
 
-                <div className="md:hidden flex items-center justify-between bg-white border-b border-slate-200 p-4 sticky top-0 z-30">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-blue-700 flex items-center justify-center text-white">
-                            <span className="material-symbols-outlined text-lg">school</span>
-                        </div>
-                        <span className="font-bold text-blue-700 text-lg">Руна С</span>
-                    </div>
-                    <button
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        className="text-slate-500 hover:text-slate-900 p-1"
-                    >
-                        <span className="material-symbols-outlined text-3xl">menu</span>
-                    </button>
-                </div>
+                <Header setIsOpen={setIsMobileMenuOpen} />
 
                 <div className="flex-1 p-4 md:p-0">
                     {children}

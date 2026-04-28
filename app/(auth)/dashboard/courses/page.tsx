@@ -1,7 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './courses.module.scss';
 
 type Course = {
@@ -14,11 +15,20 @@ type Course = {
     likesCount: number;
 };
 
-export default function CoursesPage() {
+function CoursesPageContent() {
+    const searchParams = useSearchParams();
     const [courses, setCourses] = useState<Course[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [activeFilter, setActiveFilter] = useState('Все продукты');
+
+    useEffect(() => {
+        const query = searchParams.get('search');
+        if (query !== null) {
+            setSearchQuery(query);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -145,6 +155,7 @@ export default function CoursesPage() {
                             onClick={() => {
                                 setSearchQuery('');
                                 setActiveFilter('Все продукты');
+                                window.history.replaceState({}, '', '/dashboard/courses');
                             }}
                         >
                             Сбросить фильтры
@@ -153,5 +164,20 @@ export default function CoursesPage() {
                 )}
             </section>
         </div>
+    );
+}
+
+export default function CoursesPage() {
+    return (
+        <Suspense fallback={
+            <div className={styles.pageWrapper}>
+                <div className={styles.loaderContainer}>
+                    <span className={`material-symbols-outlined ${styles.spinner}`}>autorenew</span>
+                    <p>Загрузка страницы...</p>
+                </div>
+            </div>
+        }>
+            <CoursesPageContent />
+        </Suspense>
     );
 }
