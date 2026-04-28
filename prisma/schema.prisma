@@ -157,3 +157,15 @@ model CourseComment {
   course     Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
+
+model SystemSettings {
+  id                 Int      @id @default(1)
+  platformName       String   @default("Руна С Обучение")
+  supportEmail       String?  @default("runa_post@mail.ru")
+  supportPhone       String?  @default("+7 929-044-73-03")
+  address            String?  @default("г. Нижний Новгород, ул. Нестерова, д. 9, оф. 804")
+  workingHours       String?  @default("Пн - Пт, с 9:00 до 18:00 (мск)")
+  allowRegistration  Boolean  @default(true)
+  inviteOnly         Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+}

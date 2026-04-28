@@ -3,10 +3,15 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import styles from './login.module.scss';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function LoginPage() {
     const router = useRouter();
+
+    const { data: settings, isLoading: isSettingsLoading } = useSWR('/api/settings', fetcher);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -67,7 +72,7 @@ export default function LoginPage() {
         }
     };
 
-    if (isCheckingAuth) {
+    if (isCheckingAuth || isSettingsLoading) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-6 font-sans">
                 <div className="relative flex items-center justify-center w-24 h-24">
@@ -79,7 +84,7 @@ export default function LoginPage() {
 
                 <div className="flex flex-col items-center space-y-1">
                     <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                        Руна С Обучение
+                        {settings?.platformName || 'Руна С Обучение'}
                     </h2>
                     <p className="text-sm font-medium text-blue-700 animate-pulse">
                         Проверка сессии...
@@ -96,7 +101,9 @@ export default function LoginPage() {
                 <div className="absolute bottom-[20%] -right-10 w-96 h-96 rounded-full border border-white/10 glass-effect"></div>
 
                 <div className="relative z-10">
-                    <Link className="font-bold text-2xl text-white tracking-tighter" href="/">Руна С Обучение</Link>
+                    <Link className="font-bold text-2xl text-white tracking-tighter" href="/">
+                        {settings?.platformName || 'Руна С Обучение'}
+                    </Link>
                 </div>
 
                 <div className="relative z-10 max-w-lg">
@@ -179,12 +186,15 @@ export default function LoginPage() {
                             </Link>
                         </div>
 
-                        <div className="text-center pt-4 border-t border-slate-100">
-                            <p className="text-slate-500 text-sm">
-                                Нет аккаунта?
-                                <Link href="/register" className="text-blue-600 font-semibold hover:underline ml-1">Зарегистрироваться</Link>
-                            </p>
-                        </div>
+                        {/* Показываем кнопку регистрации только если она разрешена в настройках */}
+                        {settings?.allowRegistration && (
+                            <div className="text-center pt-4 border-t border-slate-100">
+                                <p className="text-slate-500 text-sm">
+                                    Нет аккаунта?
+                                    <Link href="/register" className="text-blue-600 font-semibold hover:underline ml-1">Зарегистрироваться</Link>
+                                </p>
+                            </div>
+                        )}
                     </form>
                 </div>
             </section>

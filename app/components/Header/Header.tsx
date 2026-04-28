@@ -10,6 +10,8 @@ export default function Header() {
     const pathname = usePathname();
     const [isAuth, setIsAuth] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [platformName, setPlatformName] = useState('Руна С Обучение');
+    const [allowRegistration, setAllowRegistration] = useState(true);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -20,7 +22,26 @@ export default function Header() {
                 setIsAuth(false);
             }
         };
+
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data?.platformName) {
+                        setPlatformName(data.platformName);
+                    }
+                    if (data?.allowRegistration !== undefined) {
+                        setAllowRegistration(data.allowRegistration);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки настроек', error);
+            }
+        };
+
         checkAuth();
+        fetchSettings();
     }, []);
 
     useEffect(() => {
@@ -40,7 +61,7 @@ export default function Header() {
         <nav className={styles.header}>
             <div className={styles.container}>
                 <Link href="/" className={styles.logo}>
-                    Руна С Обучение
+                    {platformName}
                 </Link>
 
                 <div className={styles.nav}>
@@ -64,7 +85,9 @@ export default function Header() {
                     {!isAuth ? (
                         <>
                             <Link href="/login" className={styles.loginBtn}>Вход</Link>
-                            <Link href="/register" className={styles.registerBtn}>Регистрация</Link>
+                            {allowRegistration && (
+                                <Link href="/register" className={styles.registerBtn}>Регистрация</Link>
+                            )}
                         </>
                     ) : (
                         <button onClick={handleLogout} className={styles.registerBtn}>
@@ -147,13 +170,15 @@ export default function Header() {
                             >
                                 Вход
                             </Link>
-                            <Link
-                                href="/register"
-                                className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-700 text-white font-bold rounded-lg shadow-sm hover:bg-blue-800 transition-colors text-sm"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Регистрация
-                            </Link>
+                            {allowRegistration && (
+                                <Link
+                                    href="/register"
+                                    className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-700 text-white font-bold rounded-lg shadow-sm hover:bg-blue-800 transition-colors text-sm"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Регистрация
+                                </Link>
+                            )}
                         </>
                     ) : (
                         <button
