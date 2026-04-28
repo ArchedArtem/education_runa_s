@@ -1,7 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import ToastAlert, { AlertType } from '../UI/ToastAlert/ToastAlert';
+import styles from '../UI/ToastAlert/ToastAlert.module.scss';
+
+type ToastItem = {
+    id: number;
+    message: string;
+    type: AlertType;
+    duration: number;
+};
 
 interface ToastContextType {
     showToast: (message: string, type?: AlertType, duration?: number) => void;
@@ -10,36 +18,35 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-    const [alertConfig, setAlertConfig] = useState<{
-        isOpen: boolean;
-        message: string;
-        type: AlertType;
-        duration: number;
-    }>({
-        isOpen: false,
-        message: '',
-        type: 'info',
-        duration: 4500
-    });
+    const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-    const showToast = useCallback((message: string, type: AlertType = 'info', duration: number = 6000) => {
-        setAlertConfig({ isOpen: true, message, type, duration });
+    const showToast = useCallback((message: string, type: AlertType = 'info', duration: number = 4500) => {
+        setToasts(prev => {
+            const newToast = { id: Date.now() + Math.random(), message, type, duration };
+            const newToasts = [...prev, newToast];
+            return newToasts.slice(-3);
+        });
     }, []);
 
-    const closeToast = useCallback(() => {
-        setAlertConfig(prev => ({ ...prev, isOpen: false }));
+    const removeToast = useCallback((id: number) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <ToastAlert
-                isOpen={alertConfig.isOpen}
-                message={alertConfig.message}
-                type={alertConfig.type}
-                onClose={closeToast}
-                duration={alertConfig.duration}
-            />
+            <div className={styles.toastContainer}>
+                {toasts.map(toast => (
+                    <ToastAlert
+                        key={toast.id}
+                        id={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        duration={toast.duration}
+                        onClose={() => removeToast(toast.id)}
+                    />
+                ))}
+            </div>
         </ToastContext.Provider>
     );
 }

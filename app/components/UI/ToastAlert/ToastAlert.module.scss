@@ -1,44 +1,88 @@
-.toastWrapper {
+.toastContainer {
   position: fixed;
-  top: 2rem;
-  right: 2rem;
   z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   pointer-events: none;
+
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  align-items: center;
+
+  @media (min-width: 480px) {
+    bottom: 1.5rem;
+    left: auto;
+    right: 1.5rem;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 768px) {
+    top: 2rem;
+    bottom: auto;
+    right: 2rem;
+  }
 }
 
 .toast {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   background-color: white;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   pointer-events: auto;
-  min-width: 300px;
-  max-width: 450px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border-left: 4px solid transparent;
+  will-change: transform, opacity;
+
+  @media (min-width: 480px) {
+    width: auto;
+    min-width: 300px;
+    max-width: 450px;
+    padding: 1rem 1.25rem;
+  }
 }
 
 .show {
-  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideInMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @media (min-width: 768px) {
+    animation: slideInDesktop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
 
 .hide {
-  animation: slideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideOutMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @media (min-width: 768px) {
+    animation: slideOutDesktop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(1rem) translateX(2rem); }
-  to { opacity: 1; transform: translateY(0) translateX(0); }
+@keyframes slideInMobile {
+  from { opacity: 0; transform: translateY(2rem) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes slideOut {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(2rem); }
+@keyframes slideOutMobile {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(2rem) scale(0.95); }
+}
+
+@keyframes slideInDesktop {
+  from { opacity: 0; transform: translateX(3rem) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes slideOutDesktop {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(3rem) scale(0.95); }
 }
 
 .success {
@@ -62,17 +106,25 @@
 }
 
 .icon {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
+
+  @media (min-width: 480px) {
+    font-size: 1.5rem;
+  }
 }
 
 .message {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #334155;
   font-weight: 500;
   flex-grow: 1;
   line-height: 1.4;
+
+  @media (min-width: 480px) {
+    font-size: 0.875rem;
+  }
 }
 
 .closeBtn {
@@ -86,8 +138,12 @@
   padding: 0.25rem;
   border-radius: 0.25rem;
   transition: all 0.2s;
+  flex-shrink: 0;
 
-  span { font-size: 1.25rem; }
+  span {
+    font-size: 1rem;
+    @media (min-width: 480px) { font-size: 1.25rem; }
+  }
 
   &:hover {
     background-color: #f1f5f9;

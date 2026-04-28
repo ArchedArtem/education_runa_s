@@ -6,35 +6,36 @@ import styles from './ToastAlert.module.scss';
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastAlertProps {
+    id: number;
     message: string;
     type: AlertType;
-    isOpen: boolean;
     onClose: () => void;
-    duration?: number;
+    duration: number;
 }
 
 export default function ToastAlert({
+                                       id,
                                        message,
                                        type,
-                                       isOpen,
                                        onClose,
-                                       duration = 4000
+                                       duration
                                    }: ToastAlertProps) {
-    const [isVisible, setIsVisible] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
 
     useEffect(() => {
-        if (isOpen) {
-            setIsVisible(true);
-            const timer = setTimeout(() => {
-                setIsVisible(false);
-                setTimeout(onClose, 300);
-            }, duration);
+        const timer = setTimeout(() => {
+            handleClose();
+        }, duration);
 
-            return () => clearTimeout(timer);
-        }
-    }, [isOpen, duration, onClose]);
+        return () => clearTimeout(timer);
+    }, [duration]);
 
-    if (!isOpen && !isVisible) return null;
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            onClose();
+        }, 300);
+    };
 
     const icons = {
         success: 'check_circle',
@@ -44,16 +45,14 @@ export default function ToastAlert({
     };
 
     return (
-        <div className={`${styles.toastWrapper} ${isVisible ? styles.show : styles.hide}`}>
-            <div className={`${styles.toast} ${styles[type]}`}>
-                <span className={`material-symbols-outlined ${styles.icon}`}>
-                    {icons[type]}
-                </span>
-                <p className={styles.message}>{message}</p>
-                <button onClick={() => { setIsVisible(false); setTimeout(onClose, 300); }} className={styles.closeBtn}>
-                    <span className="material-symbols-outlined">close</span>
-                </button>
-            </div>
+        <div className={`${styles.toast} ${styles[type]} ${isClosing ? styles.hide : styles.show}`}>
+            <span className={`material-symbols-outlined ${styles.icon}`}>
+                {icons[type]}
+            </span>
+            <p className={styles.message}>{message}</p>
+            <button onClick={handleClose} className={styles.closeBtn}>
+                <span className="material-symbols-outlined">close</span>
+            </button>
         </div>
     );
 }

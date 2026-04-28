@@ -350,24 +350,24 @@ export default function EditLessonPage() {
                             </div>
 
                             <div className={styles.editorSection}>
-                                <div className="flex items-center justify-between mb-2">
+                                <div className={styles.editorHeader}>
                                     <label className={styles.label} style={{ marginBottom: 0 }}>Текстовый конспект</label>
 
-                                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    <div className={styles.editorToggleGroup}>
                                         <button
                                             type="button"
                                             onClick={() => setIsHtmlMode(false)}
-                                            className={`flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${!isHtmlMode ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`${styles.editorToggleBtn} ${!isHtmlMode ? styles.active : ''}`}
                                         >
-                                            <span className="material-symbols-outlined text-[16px] mr-1">edit</span>
+                                            <span className="material-symbols-outlined">edit</span>
                                             Визуальный
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIsHtmlMode(true)}
-                                            className={`flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${isHtmlMode ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`${styles.editorToggleBtn} ${isHtmlMode ? styles.active : ''}`}
                                         >
-                                            <span className="material-symbols-outlined text-[16px] mr-1">code</span>
+                                            <span className="material-symbols-outlined">code</span>
                                             HTML
                                         </button>
                                     </div>
@@ -378,13 +378,7 @@ export default function EditLessonPage() {
                                         <textarea
                                             value={lessonData.content}
                                             onChange={e => setLessonData({...lessonData, content: e.target.value})}
-                                            className="w-full min-h-[300px] p-4 font-mono text-sm rounded-b-lg outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-                                            style={{
-                                                backgroundColor: '#1e1e1e',
-                                                color: '#d4d4d4',
-                                                caretColor: '#ffffff',
-                                                border: '1px solid #e2e8f0'
-                                            }}
+                                            className={styles.htmlTextarea}
                                             placeholder="<h1>Вставьте свой HTML код сюда...</h1>"
                                         />
                                     ) : (
@@ -434,15 +428,17 @@ export default function EditLessonPage() {
                         </div>
 
                         {existingMaterials.length > 0 && (
-                            <div className="mt-8 space-y-3 max-w-3xl mx-auto w-full">
-                                <h3 className="font-bold text-slate-900">Текущие файлы</h3>
+                            <div className={styles.filesListWrapper}>
+                                <h3>Текущие файлы</h3>
                                 {existingMaterials.map(file => (
-                                    <div key={file.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined">description</span></div>
-                                            <p className="font-bold text-sm text-slate-900">{file.name}</p>
+                                    <div key={file.id} className={styles.fileItem}>
+                                        <div className={styles.fileInfo}>
+                                            <div className={styles.fileIcon}><span className="material-symbols-outlined">description</span></div>
+                                            <div className={styles.fileText}>
+                                                <p className={styles.fileName}>{file.name}</p>
+                                            </div>
                                         </div>
-                                        <button onClick={() => removeExistingMaterial(file.id)} className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                                        <button onClick={() => removeExistingMaterial(file.id)} className={styles.fileRemoveBtn}>
                                             <span className="material-symbols-outlined">delete</span>
                                         </button>
                                     </div>
@@ -451,15 +447,17 @@ export default function EditLessonPage() {
                         )}
 
                         {newFiles.length > 0 && (
-                            <div className="mt-4 space-y-3 max-w-3xl mx-auto w-full">
-                                <h3 className="font-bold text-slate-900">Новые файлы к загрузке</h3>
+                            <div className={styles.filesListWrapper}>
+                                <h3>Новые файлы к загрузке</h3>
                                 {newFiles.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-4 bg-white border border-green-200 rounded-xl hover:border-green-300 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined">upload_file</span></div>
-                                            <p className="font-bold text-sm text-slate-900">{file.name}</p>
+                                    <div key={index} className={styles.fileItem}>
+                                        <div className={styles.fileInfo}>
+                                            <div className={styles.fileIcon} style={{backgroundColor: '#f0fdf4', color: '#16a34a'}}><span className="material-symbols-outlined">upload_file</span></div>
+                                            <div className={styles.fileText}>
+                                                <p className={styles.fileName}>{file.name}</p>
+                                            </div>
                                         </div>
-                                        <button onClick={() => removeNewFile(index)} className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                                        <button onClick={() => removeNewFile(index)} className={styles.fileRemoveBtn}>
                                             <span className="material-symbols-outlined">close</span>
                                         </button>
                                     </div>
@@ -499,7 +497,7 @@ export default function EditLessonPage() {
                                     <span className="material-symbols-outlined">quiz</span>
                                     <h3>Вопросов пока нет</h3>
                                     <p>Создайте первый вопрос для проверки знаний или доверьте это ИИ</p>
-                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                    <div className={styles.emptyStateActions}>
                                         <button onClick={handleAddQuestion} className={styles.btnAmber}>
                                             <span className="material-symbols-outlined">add</span>
                                             Добавить вручную
@@ -547,7 +545,7 @@ export default function EditLessonPage() {
                                             </div>
                                         </div>
                                     ))}
-                                    <div style={{ display: 'flex', marginTop: '1rem', gap: '1rem' }}>
+                                    <div className={styles.addActionsRow}>
                                         <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed} style={{ flex: 1 }}>
                                             <span className="material-symbols-outlined">add</span>
                                             Добавить следующий

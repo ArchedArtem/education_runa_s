@@ -196,7 +196,7 @@ export default function AdminLessonsPage() {
                                 Отмена
                             </button>
                             <button onClick={handleSaveOrder} disabled={isSavingOrder} className={styles.btnPrimary}>
-                                <span className={`material-symbols-outlined text-[20px] ${isSavingOrder ? styles.spinIcon : ''}`}>
+                                <span className={`material-symbols-outlined ${isSavingOrder ? styles.spinIcon : ''}`}>
                                     {isSavingOrder ? 'autorenew' : 'save'}
                                 </span>
                                 {isSavingOrder ? 'Сохранение...' : 'Сохранить порядок'}
