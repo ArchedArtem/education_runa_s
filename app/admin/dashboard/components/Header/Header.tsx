@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import styles from './header.module.scss';
 
@@ -22,7 +22,7 @@ const ADMIN_PAGES = [
     { title: "Создать новый курс", path: "/admin/dashboard/courses/new", icon: "add_circle", type: "Действие", requiresAdmin: true },
     { title: "База тестов", path: "/admin/dashboard/tests", icon: "quiz", type: "Раздел" },
     { title: "Статистика", path: "/admin/dashboard/statistic", icon: "bar_chart", type: "Раздел" },
-    { title: "Настройки (Клиентские)", path: "/dashboard/settings", icon: "settings", type: "Раздел" }
+    { title: "Настройки сайта", path: "/admin/dashboard/settings", icon: "settings", type: "Раздел" }
 ];
 
 export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
@@ -32,6 +32,12 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setSearchQuery('');
+        setIsDropdownOpen(false);
+    }, [pathname]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -81,9 +87,15 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
 
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && searchQuery.trim()) {
-            setIsDropdownOpen(false);
             router.push(`/admin/dashboard/users?search=${encodeURIComponent(searchQuery)}`);
+            setIsDropdownOpen(false);
+            setSearchQuery('');
         }
+    };
+
+    const handleItemClick = () => {
+        setIsDropdownOpen(false);
+        setTimeout(() => setSearchQuery(''), 100);
     };
 
     const getRoleDisplay = (role?: string) => {
@@ -127,7 +139,7 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
                                         <Link
                                             key={idx}
                                             href={page.path}
-                                            onClick={() => setIsDropdownOpen(false)}
+                                            onClick={handleItemClick}
                                             className={styles.dropdownItem}
                                         >
                                             <div className={`${styles.itemIconBox} ${styles.gray}`}>
@@ -146,7 +158,7 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
                                 <p className={styles.dropdownLabel}>Глобальный поиск в базе</p>
                                 <Link
                                     href={`/admin/dashboard/users?search=${encodeURIComponent(searchQuery)}`}
-                                    onClick={() => setIsDropdownOpen(false)}
+                                    onClick={handleItemClick}
                                     className={`${styles.dropdownItem} ${styles.globalSearch}`}
                                 >
                                     <div className={`${styles.itemIconBox} ${styles.indigo}`}>
@@ -160,7 +172,7 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
 
                                 <Link
                                     href={`/admin/dashboard/courses?search=${encodeURIComponent(searchQuery)}`}
-                                    onClick={() => setIsDropdownOpen(false)}
+                                    onClick={handleItemClick}
                                     className={`${styles.dropdownItem} ${styles.globalSearch}`}
                                 >
                                     <div className={`${styles.itemIconBox} ${styles.emerald}`}>
@@ -177,7 +189,7 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
                 </div>
             </div>
 
-            <div className={styles.rightSection}>
+            <Link href="/dashboard/settings" className={styles.rightSection}>
                 <div className={styles.adminInfo}>
                     {isLoading ? (
                         <>
@@ -204,7 +216,7 @@ export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
                         </span>
                     )}
                 </div>
-            </div>
+            </Link>
         </header>
     );
 }

@@ -233,9 +233,16 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
 
   @media (min-width: 768px) {
-    gap: 1rem;
+    gap: 1.5rem;
   }
 }
 

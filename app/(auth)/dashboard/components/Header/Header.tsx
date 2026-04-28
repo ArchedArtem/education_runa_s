@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import useSWR from 'swr';
 import styles from './header.module.scss';
@@ -34,6 +34,12 @@ export default function Header({ setIsOpen }: HeaderProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setSearchQuery('');
+        setIsDropdownOpen(false);
+    }, [pathname]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -51,9 +57,15 @@ export default function Header({ setIsOpen }: HeaderProps) {
 
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && searchQuery.trim()) {
-            setIsDropdownOpen(false);
             router.push(`/dashboard/courses?search=${encodeURIComponent(searchQuery)}`);
+            setIsDropdownOpen(false);
+            setSearchQuery('');
         }
+    };
+
+    const handleItemClick = () => {
+        setIsDropdownOpen(false);
+        setTimeout(() => setSearchQuery(''), 100);
     };
 
     const user = authData?.user;
@@ -91,7 +103,7 @@ export default function Header({ setIsOpen }: HeaderProps) {
                                         <Link
                                             key={idx}
                                             href={page.path}
-                                            onClick={() => setIsDropdownOpen(false)}
+                                            onClick={handleItemClick}
                                             className={styles.dropdownItem}
                                         >
                                             <div className={`${styles.itemIconBox} ${styles.gray}`}>
@@ -110,7 +122,7 @@ export default function Header({ setIsOpen }: HeaderProps) {
                                 <p className={styles.dropdownLabel}>Поиск по контенту</p>
                                 <Link
                                     href={`/dashboard/courses?search=${encodeURIComponent(searchQuery)}`}
-                                    onClick={() => setIsDropdownOpen(false)}
+                                    onClick={handleItemClick}
                                     className={`${styles.dropdownItem} ${styles.globalSearch}`}
                                 >
                                     <div className={`${styles.itemIconBox} ${styles.emerald}`}>
