@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './courses.module.scss';
 
 type Course = {
@@ -12,6 +12,8 @@ type Course = {
     thumbnail_url: string;
     lessonsCount: number;
 };
+
+const FILTERS = ['Все продукты', '1С:Бухгалтерия', '1С:ЗУП', '1С:УТ'];
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
@@ -34,12 +36,6 @@ export default function CoursesPage() {
         };
         fetchCourses();
     }, []);
-
-    const availableFilters = useMemo(() => {
-        const products = courses.map(course => course.software_product);
-        const uniqueProducts = Array.from(new Set(products)).filter(Boolean);
-        return ['Все продукты', ...uniqueProducts];
-    }, [courses]);
 
     const filteredCourses = courses.filter(course => {
         const matchesFilter = activeFilter === 'Все продукты' || course.software_product === activeFilter;
@@ -76,7 +72,7 @@ export default function CoursesPage() {
                 </div>
 
                 <div className={styles.filterGroup}>
-                    {availableFilters.map((filter) => (
+                    {FILTERS.map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
