@@ -1,10 +1,13 @@
+import prisma from '@/lib/prisma';
 import styles from './page.module.scss';
 
-export default function ContactsPage() {
+export const revalidate = 60;
+
+export default async function ContactsPage() {
+    const settings = await prisma.systemSettings.findFirst();
+
     const phoneContacts = [
-        { icon: 'call', label: 'Горячая линия', number: '+7 929-044-73-03' },
-        { icon: 'support_agent', label: 'Менеджер', number: '+7 929-044-73-39' },
-        { icon: 'payments', label: 'Продажи', number: '+7 963-232-82-23' }
+        { icon: 'call', label: 'Горячая линия', number: settings?.supportPhone || '' }
     ];
 
     return (
@@ -33,7 +36,7 @@ export default function ContactsPage() {
                         </div>
                         <h3 className="text-xl font-bold mb-3 text-slate-900">Адрес</h3>
                         <p className="text-sm md:text-base text-slate-600 leading-relaxed max-w-sm">
-                            г. Нижний Новгород, ул. Нестерова, д. 9, оф. 804
+                            {settings?.address || ''}
                         </p>
                     </div>
 
@@ -51,7 +54,7 @@ export default function ContactsPage() {
                         </div>
                         <h3 className="text-xl font-bold mb-3 text-slate-900">E-mail</h3>
                         <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-                            runa_post@mail.ru
+                            {settings?.supportEmail || ''}
                         </p>
                     </div>
 
@@ -61,7 +64,7 @@ export default function ContactsPage() {
                         </div>
                         <h3 className="text-xl font-bold mb-3 text-slate-900">Время работы</h3>
                         <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-                            Пн - Пт, с 9:00 до 18:00 (мск)
+                            {settings?.workingHours || ''}
                         </p>
                     </div>
                 </div>

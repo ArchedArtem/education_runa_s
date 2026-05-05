@@ -51,7 +51,7 @@ export async function GET(
         }
 
         const currentLesson = allLessons[currentIndex];
-        const nextLesson = allLessons[currentIndex + 1] || null; // Урок для кнопки "Далее"
+        const nextLesson = allLessons[currentIndex + 1] || null;
 
         const responseData = {
             lesson: {
@@ -105,14 +105,24 @@ export async function POST(
             where: { user_id: userId, lesson_id: lessonId }
         });
 
+        const completedAtDate = isCompleted ? new Date() : null;
+
         if (progress) {
             progress = await prisma.userProgress.update({
                 where: { id: progress.id },
-                data: { is_completed: isCompleted }
+                data: {
+                    is_completed: isCompleted,
+                    completed_at: completedAtDate
+                }
             });
         } else {
             progress = await prisma.userProgress.create({
-                data: { user_id: userId, lesson_id: lessonId, is_completed: isCompleted }
+                data: {
+                    user_id: userId,
+                    lesson_id: lessonId,
+                    is_completed: isCompleted,
+                    completed_at: completedAtDate
+                }
             });
         }
 

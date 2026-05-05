@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import styles from './settings.module.scss';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 export default function SettingsPage() {
     const router = useRouter();
+    const { showToast } = useToast();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -58,7 +60,7 @@ export default function SettingsPage() {
 
     const handleSave = async () => {
         if (passwords.new && passwords.new !== passwords.confirm) {
-            alert('Новые пароли не совпадают!');
+            showToast('Новые пароли не совпадают!', 'warning');
             return;
         }
 
@@ -79,13 +81,13 @@ export default function SettingsPage() {
             const data = await res.json();
 
             if (res.ok) {
-                alert('Изменения успешно сохранены!');
+                showToast('Изменения успешно сохранены!', 'success');
                 setPasswords({ current: '', new: '', confirm: '' });
             } else {
-                alert(data.error || 'Ошибка при сохранении');
+                showToast(data.error || 'Ошибка при сохранении', 'error');
             }
         } catch (error) {
-            alert('Сбой соединения с сервером');
+            showToast('Сбой соединения с сервером', 'error');
         } finally {
             setIsSaving(false);
         }

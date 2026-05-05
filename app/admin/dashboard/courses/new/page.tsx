@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './new-course.module.scss';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 const INITIAL_COURSE = {
     title: '',
@@ -21,6 +22,8 @@ export default function NewCoursePage() {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    const { showToast } = useToast();
+
     const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -38,7 +41,7 @@ export default function NewCoursePage() {
 
     const handleSave = async () => {
         if (!courseData.title || !courseData.softwareProduct) {
-            alert('Пожалуйста, заполните обязательные поля (Название и Продукт 1С)');
+            showToast('Пожалуйста, заполните обязательные поля (Название и Продукт 1С)', 'warning');
             return;
         }
 
@@ -81,12 +84,14 @@ export default function NewCoursePage() {
             if (!response.ok) throw new Error('Ошибка сохранения курса в БД');
 
             setIsSaving(false);
-            alert('Новый курс успешно создан!');
+
+            showToast('Новый курс успешно создан!', 'success');
+
             router.push('/admin/dashboard/courses');
 
         } catch (err) {
-            alert('Произошла ошибка при сохранении курса');
             setIsSaving(false);
+            showToast('Произошла ошибка при сохранении курса', 'error');
         }
     };
 

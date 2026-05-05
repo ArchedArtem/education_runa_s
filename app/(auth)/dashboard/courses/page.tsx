@@ -1,7 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './courses.module.scss';
 
 type Course = {
@@ -11,21 +12,29 @@ type Course = {
     software_product: string;
     thumbnail_url: string;
     lessonsCount: number;
+    likesCount: number;
 };
 
-const FILTERS = ['Все продукты', '1С:Бухгалтерия', '1С:ЗУП', '1С:УТ'];
-
-export default function CoursesPage() {
+function CoursesPageContent() {
+    const searchParams = useSearchParams();
     const [courses, setCourses] = useState<Course[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [activeFilter, setActiveFilter] = useState('Все продукты');
+
+    useEffect(() => {
+        const query = searchParams.get('search');
+        if (query !== null) {
+            setSearchQuery(query);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchCourses = async () => {
             try {
                 const res = await fetch('/api/courses');
-                if (!res.ok) throw new Error('Ошибка при загрузке курсов');
+                if (!res.ok) throw new Error();
                 const data = await res.json();
                 setCourses(data);
             } catch (err) {
@@ -36,6 +45,12 @@ export default function CoursesPage() {
         };
         fetchCourses();
     }, []);
+
+    const availableFilters = useMemo(() => {
+        const products = courses.map(course => course.software_product);
+        const uniqueProducts = Array.from(new Set(products)).filter(Boolean);
+        return ['Все продукты', ...uniqueProducts];
+    }, [courses]);
 
     const filteredCourses = courses.filter(course => {
         const matchesFilter = activeFilter === 'Все продукты' || course.software_product === activeFilter;
@@ -72,7 +87,7 @@ export default function CoursesPage() {
                 </div>
 
                 <div className={styles.filterGroup}>
-                    {FILTERS.map((filter) => (
+                    {availableFilters.map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
@@ -118,6 +133,10 @@ export default function CoursesPage() {
                                             <span className="material-symbols-outlined">play_lesson</span>
                                             <span>{course.lessonsCount} уроков</span>
                                         </div>
+                                        <div className={styles.statItem}>
+                                            <span className="material-symbols-outlined" style={{ color: '#ef4444', fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                                            <span>{course.likesCount}</span>
+                                        </div>
                                     </div>
 
                                     <Link href={`/dashboard/courses/${course.id}`} className={styles.actionBtn}>
@@ -136,6 +155,7 @@ export default function CoursesPage() {
                             onClick={() => {
                                 setSearchQuery('');
                                 setActiveFilter('Все продукты');
+                                window.history.replaceState({}, '', '/dashboard/courses');
                             }}
                         >
                             Сбросить фильтры
@@ -144,5 +164,20 @@ export default function CoursesPage() {
                 )}
             </section>
         </div>
+    );
+}
+
+export default function CoursesPage() {
+    return (
+        <Suspense fallback={
+            <div className={styles.pageWrapper}>
+                <div className={styles.loaderContainer}>
+                    <span className={`material-symbols-outlined ${styles.spinner}`}>autorenew</span>
+                    <p>Загрузка страницы...</p>
+                </div>
+            </div>
+        }>
+            <CoursesPageContent />
+        </Suspense>
     );
 }

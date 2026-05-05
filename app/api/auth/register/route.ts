@@ -4,19 +4,31 @@ import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
     try {
+        const settings = await prisma.systemSettings.findFirst();
+
+        if (settings && !settings.allowRegistration) {
+            return NextResponse.json({ error: "Регистрация на данный момент закрыта администратором" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { fullName, email, companyData, inviteCode, password } = body;
 
-        if (!email || !password || !fullName || !companyData || !inviteCode) {
-            return NextResponse.json({ error: "Заполните все поля" }, { status: 400 });
+        if (!email || !password || !fullName || !companyData) {
+            return NextResponse.json({ error: "Заполните все обязательные поля" }, { status: 400 });
         }
 
-        const validInvite = await prisma.inviteCode.findUnique({
-            where: { code: inviteCode }
-        });
+        if (settings?.inviteOnly) {
+            if (!inviteCode) {
+                return NextResponse.json({ error: "Необходим пригласительный код" }, { status: 400 });
+            }
 
-        if (!validInvite || !validInvite.isActive) {
-            return NextResponse.json({ error: "Неверный или неактивный код доступа" }, { status: 400 });
+            const validInvite = await prisma.inviteCode.findUnique({
+                where: { code: inviteCode }
+            });
+
+            if (!validInvite || !validInvite.isActive) {
+                return NextResponse.json({ error: "Неверный или неактивный код доступа" }, { status: 400 });
+            }
         }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -40,7 +52,7 @@ export async function POST(request: Request) {
                 role: {
                     connectOrCreate: {
                         where: { name: "client" },
-                        create: { name: "client", description: "Клиент компании Руна С" },
+                        create: { name: "client", description: "Клиент платформы" },
                     },
                 },
             },
@@ -51,7 +63,6 @@ export async function POST(request: Request) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Ошибка при регистрации:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }

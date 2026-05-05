@@ -1,8 +1,38 @@
+// app/api/admin/invites/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
-export async function GET() {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+async function getUserRole(req: Request) {
+    const authHeader = req.headers.get('authorization');
+    let token = authHeader ? authHeader.split(' ')[1] : null;
+    if (!token) {
+        const cookieStore = await cookies();
+        token = cookieStore.get('auth_token')?.value || null;
+    }
+    if (!token) return null;
     try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            include: { role: true }
+        });
+        return user?.role?.name || null;
+    } catch {
+        return null;
+    }
+}
+
+export async function GET(request: Request) {
+    try {
+        const role = await getUserRole(request);
+        if (role !== 'Admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const invites = await prisma.inviteCode.findMany({
             orderBy: {
                 createdAt: 'desc'
@@ -11,13 +41,17 @@ export async function GET() {
 
         return NextResponse.json(invites, { status: 200 });
     } catch (error) {
-        console.error("Ошибка при получении инвайт-кодов:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
+        const role = await getUserRole(request);
+        if (role !== 'Admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { code, description } = body;
 
@@ -49,20 +83,23 @@ export async function POST(request: Request) {
         );
 
     } catch (error) {
-        console.error("Ошибка при создании инвайт-кода:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }
 
 export async function PATCH(request: Request) {
     try {
+        const role = await getUserRole(request);
+        if (role !== 'Admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { id } = body;
 
         if (!id) {
             return NextResponse.json({ error: "Не передан ID кода" }, { status: 400 });
         }
-
 
         const inviteCode = await prisma.inviteCode.findUnique({
             where: { id: Number(id) }
@@ -85,20 +122,23 @@ export async function PATCH(request: Request) {
         );
 
     } catch (error) {
-        console.error("Ошибка при обновлении инвайт-кода:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }
 
 export async function DELETE(request: Request) {
     try {
+        const role = await getUserRole(request);
+        if (role !== 'Admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
         if (!id) {
             return NextResponse.json({ error: "Не передан ID кода" }, { status: 400 });
         }
-
 
         const inviteCode = await prisma.inviteCode.findUnique({
             where: { id: Number(id) }
@@ -118,7 +158,6 @@ export async function DELETE(request: Request) {
         );
 
     } catch (error) {
-        console.error("Ошибка при удалении инвайт-кода:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }

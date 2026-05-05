@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import styles from './new-lesson.module.scss';
 import 'react-quill-new/dist/quill.snow.css';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
@@ -30,11 +31,13 @@ export default function NewLessonPage() {
     const router = useRouter();
     const params = useParams();
     const courseId = params.courseID as string;
+    const { showToast } = useToast();
 
     const [isHtmlMode, setIsHtmlMode] = useState(false);
 
     const [activeTab, setActiveTab] = useState<'main' | 'files' | 'test'>('main');
     const [isSaving, setIsSaving] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     const [lessonData, setLessonData] = useState(INITIAL_LESSON);
     const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -90,15 +93,58 @@ export default function NewLessonPage() {
         }));
     };
 
+    const handleGenerateAITest = async () => {
+        if (!lessonData.content || lessonData.content.trim() === '' || lessonData.content === '<p><br></p>') {
+            showToast('Сначала заполните текстовый конспект урока!', 'warning');
+            return;
+        }
+
+        setIsGeneratingAI(true);
+        try {
+            const res = await fetch('/api/admin/ai/generate-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: lessonData.content })
+            });
+
+            if (!res.ok) throw new Error('Ошибка генерации');
+
+            const data = await res.json();
+
+            const generatedQuestions = data.questions.map((q: any) => ({
+                id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                text: q.text,
+                type: q.type,
+                options: q.options.map((opt: any) => ({
+                    id: `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    text: opt.text,
+                    isCorrect: opt.isCorrect
+                }))
+            }));
+
+            setTestData(prev => ({
+                ...prev,
+                isEnabled: true,
+                questions: [...prev.questions, ...generatedQuestions]
+            }));
+
+            showToast('ИИ успешно сгенерировал тест!', 'success');
+        } catch (error) {
+            showToast('Ошибка при генерации теста ИИ', 'error');
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+
     const handleSave = async () => {
         if (!lessonData.title.trim()) {
-            alert('Пожалуйста, введите название урока!');
+            showToast('Пожалуйста, введите название урока!', 'warning');
             setActiveTab('main');
             return;
         }
 
         if (testData.isEnabled && testData.questions.length === 0) {
-            alert('Вы включили тест, но не добавили ни одного вопроса.');
+            showToast('Вы включили тест, но не добавили ни одного вопроса.', 'warning');
             setActiveTab('test');
             return;
         }
@@ -159,11 +205,11 @@ export default function NewLessonPage() {
 
             if (!response.ok) throw new Error('Ошибка при сохранении урока.');
 
-            alert('Новый урок успешно создан!');
+            showToast('Новый урок успешно создан!', 'success');
             router.push(`/admin/dashboard/courses/${courseId}/lessons`);
 
         } catch (err) {
-            alert('Произошла ошибка при сохранении урока.');
+            showToast('Произошла ошибка при сохранении урока.', 'error');
         } finally {
             setIsSaving(false);
         }
@@ -181,8 +227,8 @@ export default function NewLessonPage() {
                     <button onClick={() => router.back()} className={styles.btnSecondary}>
                         Отмена
                     </button>
-                    <button onClick={handleSave} disabled={isSaving} className={styles.btnPrimary}>
-                        <span className="material-symbols-outlined">
+                    <button onClick={handleSave} disabled={isSaving || isGeneratingAI} className={styles.btnPrimary}>
+                        <span className={`material-symbols-outlined ${isSaving ? styles.spinIcon : ''}`}>
                             {isSaving ? 'autorenew' : 'add_circle'}
                         </span>
                         {isSaving ? 'Сохранение...' : 'Создать урок'}
@@ -291,24 +337,24 @@ export default function NewLessonPage() {
                             </div>
 
                             <div className={styles.editorSection}>
-                                <div className="flex items-center justify-between mb-2">
+                                <div className={styles.editorHeader}>
                                     <label className={styles.label} style={{ marginBottom: 0 }}>Текстовый конспект</label>
 
-                                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    <div className={styles.editorToggleGroup}>
                                         <button
                                             type="button"
                                             onClick={() => setIsHtmlMode(false)}
-                                            className={`flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${!isHtmlMode ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`${styles.editorToggleBtn} ${!isHtmlMode ? styles.active : ''}`}
                                         >
-                                            <span className="material-symbols-outlined text-[16px] mr-1">edit</span>
+                                            <span className="material-symbols-outlined">edit</span>
                                             Визуальный
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIsHtmlMode(true)}
-                                            className={`flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${isHtmlMode ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`${styles.editorToggleBtn} ${isHtmlMode ? styles.active : ''}`}
                                         >
-                                            <span className="material-symbols-outlined text-[16px] mr-1">code</span>
+                                            <span className="material-symbols-outlined">code</span>
                                             HTML
                                         </button>
                                     </div>
@@ -319,13 +365,7 @@ export default function NewLessonPage() {
                                         <textarea
                                             value={lessonData.content}
                                             onChange={e => setLessonData({...lessonData, content: e.target.value})}
-                                            className="w-full min-h-[300px] p-4 font-mono text-sm rounded-b-lg outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-                                            style={{
-                                                backgroundColor: '#1e1e1e',
-                                                color: '#d4d4d4',
-                                                caretColor: '#ffffff',
-                                                border: '1px solid #e2e8f0'
-                                            }}
+                                            className={styles.htmlTextarea}
                                             placeholder="<h1>Вставьте свой HTML код сюда...</h1>"
                                         />
                                     ) : (
@@ -396,22 +436,22 @@ export default function NewLessonPage() {
                         </div>
 
                         {files.length > 0 && (
-                            <div className="mt-8 space-y-3 max-w-3xl mx-auto w-full">
-                                <h3 className="font-bold text-slate-900">Прикрепленные файлы</h3>
+                            <div className={styles.filesListWrapper}>
+                                <h3>Прикрепленные файлы</h3>
                                 {files.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                                    <div key={index} className={styles.fileItem}>
+                                        <div className={styles.fileInfo}>
+                                            <div className={styles.fileIcon}>
                                                 <span className="material-symbols-outlined">description</span>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-sm text-slate-900">{file.name}</p>
-                                                <p className="text-xs text-slate-400 font-medium">{(file.size / 1024).toFixed(1)} KB</p>
+                                            <div className={styles.fileText}>
+                                                <p className={styles.fileName}>{file.name}</p>
+                                                <p className={styles.fileSize}>{(file.size / 1024).toFixed(1)} KB</p>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => removeFile(index)}
-                                            className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                                            className={styles.fileRemoveBtn}
                                         >
                                             <span className="material-symbols-outlined">delete</span>
                                         </button>
@@ -464,11 +504,19 @@ export default function NewLessonPage() {
                                 <div className={styles.emptyState}>
                                     <span className="material-symbols-outlined">quiz</span>
                                     <h3>Вопросов пока нет</h3>
-                                    <p>Создайте первый вопрос для проверки знаний</p>
-                                    <button onClick={handleAddQuestion} className={styles.btnAmber}>
-                                        <span className="material-symbols-outlined">add</span>
-                                        Добавить вопрос
-                                    </button>
+                                    <p>Создайте первый вопрос для проверки знаний или доверьте это ИИ</p>
+                                    <div className={styles.emptyStateActions}>
+                                        <button onClick={handleAddQuestion} className={styles.btnAmber}>
+                                            <span className="material-symbols-outlined">add</span>
+                                            Добавить вручную
+                                        </button>
+                                        <button onClick={handleGenerateAITest} disabled={isGeneratingAI} className={styles.btnAI}>
+                                            <span className={`material-symbols-outlined ${isGeneratingAI ? styles.spinIcon : ''}`}>
+                                                {isGeneratingAI ? 'autorenew' : 'auto_awesome'}
+                                            </span>
+                                            {isGeneratingAI ? 'Генерация ИИ...' : 'Сгенерировать ИИ'}
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -570,10 +618,18 @@ export default function NewLessonPage() {
                                             </div>
                                         </div>
                                     ))}
-                                    <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed}>
-                                        <span className="material-symbols-outlined">add</span>
-                                        Добавить следующий вопрос
-                                    </button>
+                                    <div className={styles.addActionsRow}>
+                                        <button onClick={handleAddQuestion} className={styles.btnAddQuestionDashed}>
+                                            <span className="material-symbols-outlined">add</span>
+                                            Добавить следующий
+                                        </button>
+                                        <button onClick={handleGenerateAITest} disabled={isGeneratingAI} className={styles.btnAIsmall}>
+                                            <span className={`material-symbols-outlined ${isGeneratingAI ? styles.spinIcon : ''}`}>
+                                                {isGeneratingAI ? 'autorenew' : 'auto_awesome'}
+                                            </span>
+                                            Сгенерировать ИИ
+                                        </button>
+                                    </div>
                                 </>
                             )}
                         </div>

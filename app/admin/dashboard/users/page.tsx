@@ -1,7 +1,10 @@
 "use client";
 
-import {useState, useEffect} from 'react';
+import {useState, useEffect, Suspense} from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './users.module.scss';
+import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type InviteType = {
     id: number;
@@ -21,10 +24,14 @@ type UserType = {
     created_at: string;
 };
 
-export default function AdminUsersPage() {
+function UsersPageContent() {
+    const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'users' | 'invites'>('users');
-    const [searchQuery, setSearchQuery] = useState('');
+
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
     const [roleFilter, setRoleFilter] = useState('All');
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [newInvite, setNewInvite] = useState({code: '', description: ''});
     const [isSavingInvite, setIsSavingInvite] = useState(false);
@@ -47,16 +54,40 @@ export default function AdminUsersPage() {
 
     const [editingUser, setEditingUser] = useState<UserType | null>(null);
 
+    const [isDeleteInviteModalOpen, setIsDeleteInviteModalOpen] = useState(false);
+    const [inviteToDelete, setInviteToDelete] = useState<number | null>(null);
+
+    const { showToast } = useToast();
+
+    useEffect(() => {
+        const query = searchParams.get('search');
+        if (query !== null) {
+            setSearchQuery(query);
+            setActiveTab('users');
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+            try {
+                const res = await fetch('/api/admin/auth/me', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUserRole(data.user?.role?.name || data.roleName);
+                }
+            } catch (err) {}
+        };
+        fetchRole();
+    }, []);
+
     const getRoleName = (roleId: number) => {
         switch (roleId) {
-            case 1:
-                return 'Admin';
-            case 2:
-                return 'Client';
-            case 3:
-                return 'Moderator';
-            default:
-                return 'Client';
+            case 1: return 'Admin';
+            case 2: return 'Client';
+            case 3: return 'Moderator';
+            default: return 'Client';
         }
     };
 
@@ -64,7 +95,8 @@ export default function AdminUsersPage() {
         const matchesSearch =
             user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (user.company_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-            user.first_name.toLowerCase().includes(searchQuery.toLowerCase());
+            user.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.last_name.toLowerCase().includes(searchQuery.toLowerCase());
 
         const roleName = getRoleName(user.role_id);
         const matchesRole = roleFilter === 'All' || roleName === roleFilter;
@@ -73,11 +105,13 @@ export default function AdminUsersPage() {
     });
 
     useEffect(() => {
-        if (activeTab === 'invites') {
+        if (activeTab === 'invites' && userRole === 'Admin') {
             const fetchInvites = async () => {
                 setIsLoadingInvites(true);
                 try {
-                    const res = await fetch('/api/admin/invites');
+                    const token = localStorage.getItem('token');
+                    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+                    const res = await fetch('/api/admin/invites', { headers });
                     if (res.ok) {
                         const data = await res.json();
                         setInvites(data);
@@ -92,7 +126,9 @@ export default function AdminUsersPage() {
             const fetchUsers = async () => {
                 setIsLoadingUsers(true);
                 try {
-                    const res = await fetch('/api/admin/users');
+                    const token = localStorage.getItem('token');
+                    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+                    const res = await fetch('/api/admin/users', { headers });
                     if (res.ok) {
                         const data = await res.json();
                         setUsers(data);
@@ -104,27 +140,33 @@ export default function AdminUsersPage() {
             };
             fetchUsers();
         }
-    }, [activeTab]);
+    }, [activeTab, userRole]);
 
     const handleCreateInvite = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newInvite.code) return;
         setIsSavingInvite(true);
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/invites', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify(newInvite),
             });
             const data = await res.json();
             if (res.ok) {
                 setNewInvite({code: '', description: ''});
                 setInvites(prev => [data.invite, ...prev]);
+                showToast('Пригласительный код успешно создан', 'success');
             } else {
-                alert(data.error);
+                showToast(data.error || 'Ошибка при создании кода', 'error');
             }
         } catch (e) {
-            alert('Ошибка сервера');
+            showToast('Ошибка сервера', 'error');
         } finally {
             setIsSavingInvite(false);
         }
@@ -135,9 +177,14 @@ export default function AdminUsersPage() {
             invite.id === id ? {...invite, isActive: !currentStatus} : invite
         ));
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/invites', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify({id}),
             });
             if (!res.ok) throw new Error();
@@ -145,18 +192,36 @@ export default function AdminUsersPage() {
             setInvites(prev => prev.map(invite =>
                 invite.id === id ? {...invite, isActive: currentStatus} : invite
             ));
+            showToast('Не удалось изменить статус', 'error');
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Вы уверены, что хотите навсегда удалить этот код?')) return;
+    const confirmDeleteInvite = (id: number) => {
+        setInviteToDelete(id);
+        setIsDeleteInviteModalOpen(true);
+    };
+
+    const cancelDeleteInvite = () => {
+        setIsDeleteInviteModalOpen(false);
+        setInviteToDelete(null);
+    };
+
+    const executeDeleteInvite = async () => {
+        if (inviteToDelete === null) return;
         const previousInvites = [...invites];
-        setInvites(prev => prev.filter(invite => invite.id !== id));
+        setInvites(prev => prev.filter(invite => invite.id !== inviteToDelete));
         try {
-            const res = await fetch(`/api/admin/invites?id=${id}`, {method: 'DELETE'});
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch(`/api/admin/invites?id=${inviteToDelete}`, {method: 'DELETE', headers});
             if (!res.ok) throw new Error();
+            showToast('Код успешно удален', 'success');
         } catch (error) {
             setInvites(previousInvites);
+            showToast('Не удалось удалить код', 'error');
+        } finally {
+            setIsDeleteInviteModalOpen(false);
+            setInviteToDelete(null);
         }
     };
 
@@ -164,9 +229,14 @@ export default function AdminUsersPage() {
         e.preventDefault();
         setIsSavingUser(true);
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify(newUser),
             });
             const data = await res.json();
@@ -174,11 +244,12 @@ export default function AdminUsersPage() {
                 setUsers(prev => [data.user, ...prev]);
                 setIsUserModalOpen(false);
                 setNewUser({first_name: '', last_name: '', email: '', company_name: '', password: '', role_id: 2});
+                showToast('Пользователь успешно добавлен', 'success');
             } else {
-                alert(data.error);
+                showToast(data.error || 'Ошибка при создании пользователя', 'error');
             }
         } catch (e) {
-            alert('Ошибка сервера');
+            showToast('Ошибка сервера', 'error');
         } finally {
             setIsSavingUser(false);
         }
@@ -189,20 +260,26 @@ export default function AdminUsersPage() {
         if (!editingUser) return;
         setIsSavingUser(true);
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/users', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify({action: 'edit', ...editingUser}),
             });
             const data = await res.json();
             if (res.ok) {
                 setUsers(prev => prev.map(u => u.id === editingUser.id ? data.user : u));
                 setEditingUser(null);
+                showToast('Данные пользователя обновлены', 'success');
             } else {
-                alert(data.error);
+                showToast(data.error || 'Ошибка при обновлении пользователя', 'error');
             }
         } catch (e) {
-            alert('Ошибка сервера');
+            showToast('Ошибка сервера', 'error');
         } finally {
             setIsSavingUser(false);
         }
@@ -213,9 +290,14 @@ export default function AdminUsersPage() {
             user.id === id ? {...user, is_block: !currentStatus} : user
         ));
         try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
             const res = await fetch('/api/admin/users', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers,
                 body: JSON.stringify({id, action: 'toggle_block'}),
             });
             if (!res.ok) throw new Error();
@@ -223,12 +305,22 @@ export default function AdminUsersPage() {
             setUsers(prev => prev.map(user =>
                 user.id === id ? {...user, is_block: currentStatus} : user
             ));
-            alert('Не удалось обновить статус пользователя');
+            showToast('Не удалось обновить статус пользователя', 'error');
         }
     };
 
     return (
         <div className={styles.pageContainer}>
+            <ConfirmModal
+                isOpen={isDeleteInviteModalOpen}
+                title="Удаление кода доступа"
+                message="Вы уверены, что хотите навсегда удалить этот код?"
+                confirmText="Удалить"
+                cancelText="Отмена"
+                onConfirm={executeDeleteInvite}
+                onCancel={cancelDeleteInvite}
+                isDangerous={true}
+            />
 
             <section className={styles.headerSection}>
                 <div>
@@ -242,12 +334,14 @@ export default function AdminUsersPage() {
                     >
                         Пользователи
                     </button>
-                    <button
-                        onClick={() => setActiveTab('invites')}
-                        className={activeTab === 'invites' ? styles.tabBtnActive : styles.tabBtn}
-                    >
-                        Коды доступа
-                    </button>
+                    {userRole === 'Admin' && (
+                        <button
+                            onClick={() => setActiveTab('invites')}
+                            className={activeTab === 'invites' ? styles.tabBtnActive : styles.tabBtn}
+                        >
+                            Коды доступа
+                        </button>
+                    )}
                 </div>
             </section>
 
@@ -255,14 +349,14 @@ export default function AdminUsersPage() {
                 <div className={styles.animateFadeIn}>
                     <div className={styles.toolbar}>
                         <div className={styles.searchWrapper}>
-                        <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
+                            <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
                             <input
-                            type="text"
-                            placeholder="Поиск по фамилии, email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={styles.searchInput}
-                        />
+                                type="text"
+                                placeholder="Поиск по фамилии, email..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={styles.searchInput}
+                            />
                         </div>
                         <div className={styles.filtersWrapper}>
                             <div className={styles.rolesScroll}>
@@ -276,13 +370,15 @@ export default function AdminUsersPage() {
                                     </button>
                                 ))}
                             </div>
-                            <button
-                                onClick={() => setIsUserModalOpen(true)}
-                                className={styles.addBtn}
-                            >
-                                <span className="material-symbols-outlined" style={{fontSize: '18px'}}>add</span>
-                                Добавить
-                            </button>
+                            {userRole === 'Admin' && (
+                                <button
+                                    onClick={() => setIsUserModalOpen(true)}
+                                    className={styles.addBtn}
+                                >
+                                    <span className="material-symbols-outlined" style={{fontSize: '18px'}}>add</span>
+                                    Добавить
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -374,13 +470,15 @@ export default function AdminUsersPage() {
                                                 </td>
                                                 <td className={styles.td} style={{textAlign: 'right'}}>
                                                     <div className={styles.actions}>
-                                                        <button
-                                                            onClick={() => setEditingUser(user)}
-                                                            className={styles.actionBtn}
-                                                        >
-                                                            <span className="material-symbols-outlined"
-                                                                  style={{fontSize: '20px'}}>edit</span>
-                                                        </button>
+                                                        {userRole === 'Admin' && (
+                                                            <button
+                                                                onClick={() => setEditingUser(user)}
+                                                                className={styles.actionBtn}
+                                                            >
+                                                                <span className="material-symbols-outlined"
+                                                                      style={{fontSize: '20px'}}>edit</span>
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => handleToggleUserBlock(user.id, user.is_block)}
                                                             className={user.is_block ? styles.actionBtnSuccess : styles.actionBtnDanger}
@@ -404,7 +502,7 @@ export default function AdminUsersPage() {
                 </div>
             )}
 
-            {activeTab === 'invites' && (
+            {activeTab === 'invites' && userRole === 'Admin' && (
                 <div className={styles.animateFadeIn}>
                     <section className={styles.inviteHeader}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem'}}>
@@ -503,7 +601,7 @@ export default function AdminUsersPage() {
                                                         <span className="material-symbols-outlined"
                                                               style={{fontSize: '20px'}}>{invite.isActive ? 'visibility_off' : 'visibility'}</span>
                                                     </button>
-                                                    <button onClick={() => handleDelete(invite.id)}
+                                                    <button onClick={() => confirmDeleteInvite(invite.id)}
                                                             className={styles.actionBtnDanger}>
                                                         <span className="material-symbols-outlined"
                                                               style={{fontSize: '20px'}}>delete</span>
@@ -736,5 +834,13 @@ export default function AdminUsersPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AdminUsersPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><span className="material-symbols-outlined animate-spin text-3xl text-blue-600">autorenew</span></div>}>
+            <UsersPageContent />
+        </Suspense>
     );
 }

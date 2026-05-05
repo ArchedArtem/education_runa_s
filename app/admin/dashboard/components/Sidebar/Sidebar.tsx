@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface AdminSidebarProps {
     isOpen: boolean;
@@ -12,6 +15,23 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const [role, setRole] = useState<string | null>(null);
+
+    const { data: settings } = useSWR('/api/settings', fetcher);
+    const platformName = settings?.platformName || 'Руна С Обучение';
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                const res = await fetch('/api/admin/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    setRole(data.roleName?.toLowerCase() || null);
+                }
+            } catch {}
+        };
+        fetchRole();
+    }, []);
 
     useEffect(() => {
         setIsOpen(false);
@@ -47,7 +67,9 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                         <span className="material-symbols-outlined text-2xl text-blue-500">shield</span>
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tight text-white leading-none">Руна С</h2>
+                        <h2 className="text-xl font-bold tracking-tight text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]" title={platformName}>
+                            {platformName}
+                        </h2>
                         <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Админ-панель</span>
                     </div>
                 </div>
@@ -76,6 +98,13 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                     <span className="material-symbols-outlined">quiz</span>
                     <span className="text-sm">База тестов</span>
                 </Link>
+
+                {role === 'admin' && (
+                    <Link href="/admin/dashboard/settings" className={getLinkClass("/admin/dashboard/settings")}>
+                        <span className="material-symbols-outlined">settings</span>
+                        <span className="text-sm">Настройки сайта</span>
+                    </Link>
+                )}
             </nav>
 
             <div className="px-4 mt-auto pt-4 border-t border-slate-800 space-y-2">

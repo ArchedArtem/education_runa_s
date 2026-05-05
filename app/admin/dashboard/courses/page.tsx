@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import styles from './courses.module.scss';
+import ConfirmModal from '@/app/components/UI/ConfirmModal/ConfirmModal';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type Course = {
     id: number;
@@ -17,48 +20,86 @@ type Course = {
     }
 };
 
-export default function AdminCoursesPage() {
+function CoursesPageContent() {
+    const searchParams = useSearchParams();
     const [courses, setCourses] = useState<Course[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
     const [statusFilter, setStatusFilter] = useState('All');
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [courseToDelete, setCourseToDelete] = useState<{ id: number; title: string } | null>(null);
+
+    const { showToast } = useToast();
 
     useEffect(() => {
-        const fetchCourses = async () => {
+        const query = searchParams.get('search');
+        if (query !== null) {
+            setSearchQuery(query);
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        const fetchCoursesAndRole = async () => {
             try {
-                const res = await fetch('/api/admin/courses');
+                const token = localStorage.getItem('token');
+                const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const roleRes = await fetch('/api/admin/auth/me', { headers });
+                if (roleRes.ok) {
+                    const roleData = await roleRes.json();
+                    setUserRole(roleData.user?.role?.name?.toLowerCase() || roleData.roleName?.toLowerCase() || 'moderator');
+                }
+
+                const res = await fetch('/api/admin/courses', { headers });
                 if (!res.ok) throw new Error('Ошибка сервера при загрузке');
                 const data = await res.json();
                 setCourses(data);
             } catch (error) {
                 console.error(error);
-                alert('Не удалось загрузить список курсов');
+                showToast('Не удалось загрузить список курсов', 'error');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchCourses();
-    }, []);
+        fetchCoursesAndRole();
+    }, [showToast]);
 
-    const handleDelete = async (id: number, title: string) => {
-        const confirmDelete = window.confirm(`Вы действительно хотите удалить курс "${title}"? Все уроки внутри него также будут удалены.`);
+    const confirmDelete = (id: number, title: string) => {
+        setCourseToDelete({ id, title });
+        setIsDeleteModalOpen(true);
+    };
 
-        if (!confirmDelete) return;
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setCourseToDelete(null);
+    };
+
+    const executeDelete = async () => {
+        if (!courseToDelete) return;
 
         try {
-            const res = await fetch(`/api/admin/courses/${id}`, {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            const res = await fetch(`/api/admin/courses/${courseToDelete.id}`, {
                 method: 'DELETE',
+                headers,
             });
 
             if (!res.ok) throw new Error('Ошибка при удалении');
 
-            setCourses(courses.filter(course => course.id !== id));
-            alert('Курс удален!');
-
+            setCourses(courses.filter(course => course.id !== courseToDelete.id));
+            showToast('Курс успешно удален', 'success');
         } catch (error) {
             console.error(error);
-            alert('Произошла ошибка при удалении курса');
+            showToast('Произошла ошибка при удалении курса', 'error');
+        } finally {
+            setIsDeleteModalOpen(false);
+            setCourseToDelete(null);
         }
     };
 
@@ -77,15 +118,30 @@ export default function AdminCoursesPage() {
 
     return (
         <div className={`${styles.container} animate-in fade-in duration-300`}>
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="Удаление курса"
+                message={`Вы действительно хотите безвозвратно удалить курс "${courseToDelete?.title}"? Все уроки и прогресс клиентов будут уничтожены.`}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                onConfirm={executeDelete}
+                onCancel={cancelDelete}
+                isDangerous={true}
+            />
+
             <section className={styles.header}>
                 <div>
                     <h1 className={styles.title}>Курсы и Уроки</h1>
                     <p className={styles.subtitle}>Управление образовательным контентом платформы.</p>
                 </div>
-                <Link href="/admin/dashboard/courses/new" className={styles.createButton}>
-                    <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                    Создать курс
-                </Link>
+
+                {userRole === 'admin' && (
+                    <Link href="/admin/dashboard/courses/new" className={styles.createButton}>
+                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                        Создать курс
+                    </Link>
+                )}
             </section>
 
             <section className={styles.filtersBar}>
@@ -186,13 +242,15 @@ export default function AdminCoursesPage() {
                                     Изменить
                                 </Link>
 
-                                <button
-                                    onClick={() => handleDelete(course.id, course.title)}
-                                    className={`${styles.actionButton} ${styles.delete}`}
-                                >
-                                    <span className={`material-symbols-outlined ${styles.actionIcon}`}>delete</span>
-                                    Удалить
-                                </button>
+                                {userRole === 'admin' && (
+                                    <button
+                                        onClick={() => confirmDelete(course.id, course.title)}
+                                        className={`${styles.actionButton} ${styles.delete}`}
+                                    >
+                                        <span className={`material-symbols-outlined ${styles.actionIcon}`}>delete</span>
+                                        Удалить
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))
@@ -202,7 +260,11 @@ export default function AdminCoursesPage() {
                         <h3 className={styles.emptyTitle}>Курсы не найдены</h3>
                         <p className={styles.emptyText}>В базе данных пока нет курсов, соответствующих вашему запросу.</p>
                         <button
-                            onClick={() => {setSearchQuery(''); setStatusFilter('All');}}
+                            onClick={() => {
+                                setSearchQuery('');
+                                setStatusFilter('All');
+                                window.history.replaceState({}, '', '/admin/dashboard/courses');
+                            }}
                             className={styles.resetButton}
                         >
                             Сбросить фильтры
@@ -211,5 +273,13 @@ export default function AdminCoursesPage() {
                 )}
             </section>
         </div>
+    );
+}
+
+export default function AdminCoursesPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><span className="material-symbols-outlined animate-spin text-3xl text-blue-600">autorenew</span></div>}>
+            <CoursesPageContent />
+        </Suspense>
     );
 }

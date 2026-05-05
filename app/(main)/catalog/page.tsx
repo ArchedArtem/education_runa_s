@@ -115,7 +115,7 @@ export default function CatalogPage() {
                                         {course.description || 'Описание курса отсутствует.'}
                                     </p>
 
-                                    <div className="mt-auto w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-50 text-blue-700 font-bold rounded-xl group-hover:bg-blue-600 group-hover: transition-all duration-300">
+                                    <div className="mt-auto w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-50 text-blue-700 font-bold rounded-xl group-hover:bg-blue-700 group-hover:text-white transition-all duration-300">
                                         Начать обучение
                                         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                                     </div>

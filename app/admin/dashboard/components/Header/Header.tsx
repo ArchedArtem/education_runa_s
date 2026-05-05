@@ -1,41 +1,222 @@
 "use client";
 
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import styles from './header.module.scss';
+
 interface AdminHeaderProps {
     setIsOpen: (isOpen: boolean) => void;
 }
 
+type AdminProfile = {
+    firstName: string;
+    lastName: string;
+    roleName: string;
+};
+
+const ADMIN_PAGES = [
+    { title: "Дашборд (Обзор)", path: "/admin/dashboard", icon: "dashboard", type: "Раздел" },
+    { title: "Пользователи и клиенты", path: "/admin/dashboard/users", icon: "group", type: "Раздел" },
+    { title: "Каталог курсов и уроков", path: "/admin/dashboard/courses", icon: "menu_book", type: "Раздел" },
+    { title: "Создать новый курс", path: "/admin/dashboard/courses/new", icon: "add_circle", type: "Действие", requiresAdmin: true },
+    { title: "База тестов", path: "/admin/dashboard/tests", icon: "quiz", type: "Раздел" },
+    { title: "Статистика", path: "/admin/dashboard/statistic", icon: "bar_chart", type: "Раздел" },
+    { title: "Настройки сайта", path: "/admin/dashboard/settings", icon: "settings", type: "Раздел" }
+];
+
 export default function AdminHeader({ setIsOpen }: AdminHeaderProps) {
+    const [admin, setAdmin] = useState<AdminProfile | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setSearchQuery('');
+        setIsDropdownOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const fetchAdminProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const res = await fetch('/api/admin/auth/me', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    const userData = data.user || data;
+                    const roleName = userData?.role?.name || userData?.roleName || 'Client';
+
+                    setAdmin({
+                        firstName: userData.first_name || userData.firstName || '',
+                        lastName: userData.last_name || userData.lastName || '',
+                        roleName: roleName
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAdminProfile();
+    }, []);
+
+    const filteredPages = ADMIN_PAGES.filter(page => {
+        const matchesSearch = page.title.toLowerCase().includes(searchQuery.toLowerCase());
+        if (page.requiresAdmin && admin?.roleName?.toLowerCase() !== 'admin') {
+            return false;
+        }
+        return matchesSearch;
+    });
+
+    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            router.push(`/admin/dashboard/users?search=${encodeURIComponent(searchQuery)}`);
+            setIsDropdownOpen(false);
+            setSearchQuery('');
+        }
+    };
+
+    const handleItemClick = () => {
+        setIsDropdownOpen(false);
+        setTimeout(() => setSearchQuery(''), 100);
+    };
+
+    const getRoleDisplay = (role?: string) => {
+        if (!role) return 'Загрузка...';
+        const r = role.toLowerCase();
+        if (r === 'admin' || r === 'администратор') return 'Главный администратор';
+        if (r === 'moderator' || r === 'модератор') return 'Модератор';
+        return 'Сотрудник платформы';
+    };
+
     return (
-        <header className="h-20 bg-white flex justify-between items-center w-full px-4 md:px-8 border-b border-slate-200 sticky top-0 z-30 shadow-sm gap-4">
-            <div className="flex items-center gap-4 flex-1">
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="md:hidden text-slate-500 hover:text-slate-900 p-1 flex-shrink-0"
-                >
-                    <span className="material-symbols-outlined text-3xl">menu</span>
+        <header className={styles.header}>
+            <div className={styles.leftSection}>
+                <button onClick={() => setIsOpen(true)} className={styles.menuBtn}>
+                    <span className="material-symbols-outlined">menu</span>
                 </button>
 
-                <div className="flex-1 max-w-xl hidden sm:block">
-                    <div className="relative group">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-700">search</span>
+                <div className={styles.searchWrapper} ref={searchRef}>
+                    <div className={styles.searchInputContainer}>
+                        <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
                         <input
                             type="text"
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/10 transition-all duration-300"
-                            placeholder="Поиск по ID клиента, email или названию курса..."
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setIsDropdownOpen(true);
+                            }}
+                            onFocus={() => setIsDropdownOpen(true)}
+                            onKeyDown={handleSearch}
+                            className={styles.searchInput}
+                            placeholder="Поиск по разделам, курсам и пользователям..."
                         />
                     </div>
+
+                    {isDropdownOpen && searchQuery.trim().length > 0 && (
+                        <div className={styles.dropdown}>
+                            {filteredPages.length > 0 && (
+                                <div className={styles.dropdownSection}>
+                                    <p className={styles.dropdownLabel}>Разделы и действия</p>
+                                    {filteredPages.map((page, idx) => (
+                                        <Link
+                                            key={idx}
+                                            href={page.path}
+                                            onClick={handleItemClick}
+                                            className={styles.dropdownItem}
+                                        >
+                                            <div className={`${styles.itemIconBox} ${styles.gray}`}>
+                                                <span className="material-symbols-outlined">{page.icon}</span>
+                                            </div>
+                                            <div className={styles.itemContent}>
+                                                <p className={styles.itemTitle}>{page.title}</p>
+                                                <p className={styles.itemSub}>{page.type}</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className={styles.dropdownSection}>
+                                <p className={styles.dropdownLabel}>Глобальный поиск в базе</p>
+                                <Link
+                                    href={`/admin/dashboard/users?search=${encodeURIComponent(searchQuery)}`}
+                                    onClick={handleItemClick}
+                                    className={`${styles.dropdownItem} ${styles.globalSearch}`}
+                                >
+                                    <div className={`${styles.itemIconBox} ${styles.indigo}`}>
+                                        <span className="material-symbols-outlined">person_search</span>
+                                    </div>
+                                    <div className={styles.itemContent}>
+                                        <p className={styles.itemTitle}>Пользователи: <strong>"{searchQuery}"</strong></p>
+                                    </div>
+                                    <span className={`material-symbols-outlined ${styles.chevron}`}>chevron_right</span>
+                                </Link>
+
+                                <Link
+                                    href={`/admin/dashboard/courses?search=${encodeURIComponent(searchQuery)}`}
+                                    onClick={handleItemClick}
+                                    className={`${styles.dropdownItem} ${styles.globalSearch}`}
+                                >
+                                    <div className={`${styles.itemIconBox} ${styles.emerald}`}>
+                                        <span className="material-symbols-outlined">library_books</span>
+                                    </div>
+                                    <div className={styles.itemContent}>
+                                        <p className={styles.itemTitle}>В курсах: <strong>"{searchQuery}"</strong></p>
+                                    </div>
+                                    <span className={`material-symbols-outlined ${styles.chevron}`}>chevron_right</span>
+                                </Link>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
-                <div className="hidden lg:flex flex-col items-end">
-                    <span className="text-sm font-bold text-slate-900">Смирнов А.</span>
-                    <span className="text-xs text-blue-700 font-semibold">Главный администратор</span>
+            <Link href="/dashboard/settings" className={styles.rightSection}>
+                <div className={styles.adminInfo}>
+                    {isLoading ? (
+                        <>
+                            <div className={`${styles.skeletonLine} ${styles.w24}`}></div>
+                            <div className={`${styles.skeletonLine} ${styles.w32}`}></div>
+                        </>
+                    ) : (
+                        <>
+                            <span className={styles.adminName}>
+                                {admin ? `${admin.lastName} ${admin.firstName?.charAt(0) || ''}.` : 'Неизвестный'}
+                            </span>
+                            <span className={styles.adminRole}>
+                                {getRoleDisplay(admin?.roleName)}
+                            </span>
+                        </>
+                    )}
                 </div>
-                <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-md border-2 border-white ring-2 ring-slate-100">
-                    <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                <div className={styles.avatar}>
+                    {isLoading ? (
+                        <span className={`material-symbols-outlined ${styles.spinner}`}>sync</span>
+                    ) : (
+                        <span>
+                            {admin ? `${admin.lastName?.charAt(0) || ''}${admin.firstName?.charAt(0) || ''}` : 'A'}
+                        </span>
+                    )}
                 </div>
-            </div>
+            </Link>
         </header>
     );
 }

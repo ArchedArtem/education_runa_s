@@ -1,9 +1,38 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
-export async function GET() {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+async function getUserRole(req: Request) {
+    const authHeader = req.headers.get('authorization');
+    let token = authHeader ? authHeader.split(' ')[1] : null;
+    if (!token) {
+        const cookieStore = await cookies();
+        token = cookieStore.get('auth_token')?.value || null;
+    }
+    if (!token) return null;
     try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            include: { role: true }
+        });
+        return user?.role?.name || null;
+    } catch {
+        return null;
+    }
+}
+
+export async function GET(request: Request) {
+    try {
+        const role = await getUserRole(request);
+        if (!role || (role !== 'Admin' && role !== 'Moderator')) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const users = await prisma.user.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -12,13 +41,17 @@ export async function GET() {
 
         return NextResponse.json(users, { status: 200 });
     } catch (error) {
-        console.error("Ошибка GET /users:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
+        const role = await getUserRole(request);
+        if (role !== 'Admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { first_name, last_name, email, company_name, password, role_id } = body;
 
@@ -54,13 +87,17 @@ export async function POST(request: Request) {
         );
 
     } catch (error) {
-        console.error("Ошибка POST /users:", error);
         return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
     }
 }
 
 export async function PATCH(request: Request) {
     try {
+        const role = await getUserRole(request);
+        if (!role || (role !== 'Admin' && role !== 'Moderator')) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { id, action, ...data } = body;
 
@@ -68,7 +105,7 @@ export async function PATCH(request: Request) {
             return NextResponse.json({ error: "Не передан ID пользователя" }, { status: 400 });
         }
 
-        const userId = isNaN(Number(id)) ? id : Number(id);
+        const userId = typeof id === 'string' ? id : String(id);
 
         if (action === 'toggle_block') {
             const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -86,6 +123,10 @@ export async function PATCH(request: Request) {
         }
 
         if (action === 'edit') {
+            if (role !== 'Admin') {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            }
+
             const updatedUser = await prisma.user.update({
                 where: { id: userId },
                 data: {

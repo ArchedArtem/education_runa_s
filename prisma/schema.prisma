@@ -16,7 +16,7 @@ model InviteCode {
 
 model Role {
   id          Int      @id @default(autoincrement())
-  name        String   @unique 
+  name        String   @unique
   description String?
   users       User[]
 }
@@ -25,7 +25,7 @@ model User {
   id            String         @id @default(uuid())
   role_id       Int
   role          Role           @relation(fields: [role_id], references: [id])
-  company_name  String?        
+  company_name  String?
   first_name    String
   last_name     String
   email         String         @unique
@@ -35,63 +35,67 @@ model User {
 
   reset_token         String?   @unique
   reset_token_expires DateTime?
-  
-  progress      UserProgress[]
-  test_results  TestResult[]
+
+  progress     UserProgress[]
+  test_results TestResult[]
+  likes        LessonLike[]
+  comments     Comment[]
+  ai_sessions  AiSession[]
 }
 
 model Course {
-  id               Int       @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   title            String
-  description      String?   @db.Text
+  description      String?  @db.Text
   software_product String
   authors          String?
   thumbnail_url    String?
-  is_published     Boolean   @default(false)
-  created_at       DateTime  @default(now())
-  
-  lessons          Lesson[]
-  tests            Test[]
+  is_published     Boolean  @default(false)
+  created_at       DateTime @default(now())
+
+  lessons Lesson[]
+  tests   Test[]
 }
 
 model Lesson {
-  id           Int       @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   course_id    Int
-  course       Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  course       Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
   title        String
-  content      String?   @db.Text
+  content      String?  @db.Text
   video_url    String?
-  duration     String?   @default("00:00")
+  duration     String?  @default("00:00")
   order_index  Int
-  is_published Boolean   @default(false)
-  created_at   DateTime  @default(now())
+  is_published Boolean  @default(false)
+  created_at   DateTime @default(now())
 
-  materials    Material[]
-  progress     UserProgress[]
-
-  test         Test?
+  materials Material[]
+  progress  UserProgress[]
+  test      Test?
+  likes     LessonLike[]
+  comments  Comment[]
 }
 
 model Material {
-  id          Int      @id @default(autoincrement())
-  lesson_id   Int
-  lesson      Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
-  file_name   String
-  file_url    String
-  file_type   String
+  id        Int    @id @default(autoincrement())
+  lesson_id Int
+  lesson    Lesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  file_name String
+  file_url  String
+  file_type String
 }
 
 model Test {
   id            Int      @id @default(autoincrement())
   course_id     Int?
-  course        Course?   @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  lesson_id     Int?      @unique
-  lesson        Lesson?   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  course        Course?  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lesson_id     Int?     @unique
+  lesson        Lesson?  @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
   title         String
   passing_score Int
-  
-  questions     Question[]
-  results       TestResult[]
+
+  questions Question[]
+  results   TestResult[]
 }
 
 model Question {
@@ -100,35 +104,94 @@ model Question {
   test          Test     @relation(fields: [test_id], references: [id], onDelete: Cascade)
   question_text String   @db.Text
   question_type String
-  
-  answers       Answer[]
+
+  answers Answer[]
 }
 
 model Answer {
-  id            Int      @id @default(autoincrement())
-  question_id   Int
-  question      Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
-  answer_text   String   @db.Text
-  is_correct    Boolean  @default(false)
+  id          Int      @id @default(autoincrement())
+  question_id Int
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  answer_text String   @db.Text
+  is_correct  Boolean  @default(false)
 }
 
 model UserProgress {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   user_id      String
-  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   lesson_id    Int
-  lesson       Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
-  is_completed Boolean  @default(false)
+  lesson       Lesson    @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  is_completed Boolean   @default(false)
   completed_at DateTime?
 }
 
 model TestResult {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   user_id      String
-  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   test_id      Int
-  test         Test     @relation(fields: [test_id], references: [id], onDelete: Cascade)
+  test         Test      @relation(fields: [test_id], references: [id], onDelete: Cascade)
   score        Int
   is_passed    Boolean
-  attempt_date DateTime @default(now())
+  attempt_date DateTime  @default(now())
+
+  ai_sessions AiSession[]
+}
+
+// --- Лайки ---
+
+model LessonLike {
+  id         Int      @id @default(autoincrement())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson_id  Int
+  lesson     Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@unique([user_id, lesson_id])
+}
+
+// --- Комментарии ---
+
+model Comment {
+  id         Int       @id @default(autoincrement())
+  user_id    String?
+  user       User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  lesson_id  Int
+  lesson     Lesson    @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  parent_id  Int?
+  parent     Comment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+  body       String    @db.Text
+  is_deleted Boolean   @default(false)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+}
+
+// --- ИИ-ассистент ---
+
+model AiSession {
+  id             String      @id @default(uuid())
+  user_id        String
+  user           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  // context_type: 'lesson' | 'test_result'
+  context_type   String
+  // context_id хранит lesson_id или test_result_id в зависимости от context_type
+  context_id     Int
+  test_result_id Int?
+  test_result    TestResult? @relation(fields: [test_result_id], references: [id], onDelete: SetNull)
+  created_at     DateTime    @default(now())
+
+  messages AiMessage[]
+}
+
+model AiMessage {
+  id         Int       @id @default(autoincrement())
+  session_id String
+  session    AiSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  // role: 'user' | 'assistant'
+  role       String
+  content    String    @db.Text
+  created_at DateTime  @default(now())
 }
