@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'secret-key';
 
 async function getUserRole(req: Request) {
     const authHeader = req.headers.get('authorization');
@@ -56,6 +56,11 @@ export async function GET(req: Request) {
         const testFilter: any = {};
         if (targetDate) {
             testFilter.attempt_date = { gte: targetDate };
+        }
+
+        const aiFilter: any = {};
+        if (targetDate) {
+            aiFilter.created_at = { gte: targetDate };
         }
 
         const courses = await prisma.course.findMany({
@@ -190,6 +195,23 @@ export async function GET(req: Request) {
             return timeB - timeA;
         }).slice(0, 8);
 
+        const aiLogs = await prisma.aiUsageLog.aggregate({
+            where: aiFilter,
+            _count: { id: true },
+            _sum: {
+                total_tokens: true,
+                prompt_tokens: true,
+                completion_tokens: true
+            }
+        });
+
+        const aiStats = {
+            totalGenerated: aiLogs._count.id || 0,
+            totalTokens: aiLogs._sum.total_tokens || 0,
+            promptTokens: aiLogs._sum.prompt_tokens || 0,
+            completionTokens: aiLogs._sum.completion_tokens || 0,
+        };
+
         return NextResponse.json({
             overview: {
                 activeUsers: totalUniquePlatformUsers.size,
@@ -200,7 +222,8 @@ export async function GET(req: Request) {
             courseStats,
             topStudents,
             problematicTests,
-            activityFeed
+            activityFeed,
+            aiStats
         });
 
     } catch (error) {

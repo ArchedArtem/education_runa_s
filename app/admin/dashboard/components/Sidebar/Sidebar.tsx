@@ -98,6 +98,10 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                     <span className="material-symbols-outlined">quiz</span>
                     <span className="text-sm">База тестов</span>
                 </Link>
+                <Link href="/admin/dashboard/comments" className={getLinkClass("/admin/dashboard/comments")}>
+                    <span className="material-symbols-outlined">forum</span>
+                    <span className="text-sm">Комментарии</span>
+                </Link>
 
                 {role === 'admin' && (
                     <Link href="/admin/dashboard/settings" className={getLinkClass("/admin/dashboard/settings")}>

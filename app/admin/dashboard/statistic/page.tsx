@@ -10,6 +10,7 @@ type StatData = {
     topStudents: Array<{ name: string; company: string; avgScore: number; testsTaken: number; }>;
     problematicTests: Array<{ title: string; avgScore: number; courseId: number | null; lessonId: number | null; }>;
     activityFeed: Array<{ id: string; type: string; userName: string; targetName: string; date: string | null; success: boolean; score?: number; }>;
+    aiStats?: { totalGenerated: number; totalTokens: number; promptTokens: number; completionTokens: number; };
 };
 
 export default function StatisticPage() {
@@ -144,6 +145,42 @@ export default function StatisticPage() {
                                 )) : <p className={styles.emptyState}>Проблемных тестов не найдено</p>}
                             </div>
                         </div>
+
+                        {userRole === 'Admin' && data?.aiStats && (
+                            <div className={styles.panel}>
+                                <div className={styles.panelHeader} style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                                    <h2>Использование ИИ</h2>
+                                    <span className="material-symbols-outlined" style={{ color: '#8b5cf6' }}>smart_toy</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600 }}>Тестов сгенерировано</span>
+                                        <span style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 700 }}>{data.aiStats.totalGenerated}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600 }}>Всего токенов</span>
+                                        <span style={{ fontSize: '1.25rem', color: '#8b5cf6', fontWeight: 700 }}>{data.aiStats.totalTokens.toLocaleString('ru-RU')}</span>
+                                    </div>
+
+                                    <div style={{ marginTop: '0.5rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
+                                            <span>Промпт ({data.aiStats.promptTokens.toLocaleString('ru-RU')})</span>
+                                            <span>Ответ ({data.aiStats.completionTokens.toLocaleString('ru-RU')})</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
+                                            <div style={{
+                                                width: `${(data.aiStats.promptTokens / (data.aiStats.totalTokens || 1)) * 100}%`,
+                                                backgroundColor: '#cbd5e1'
+                                            }}></div>
+                                            <div style={{
+                                                width: `${(data.aiStats.completionTokens / (data.aiStats.totalTokens || 1)) * 100}%`,
+                                                backgroundColor: '#8b5cf6'
+                                            }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </section>
 
                     <section className={styles.bentoGridBottom}>

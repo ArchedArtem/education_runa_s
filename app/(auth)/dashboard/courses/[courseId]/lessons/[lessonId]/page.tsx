@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from "next/navigation";
 import styles from './lesson.module.scss';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 
 type LessonData = {
     id: number;
@@ -23,6 +24,8 @@ export default function LessonPage() {
     const params = useParams();
     const courseId = params.courseId as string;
     const lessonId = params.lessonId as string;
+
+    const { showToast } = useToast();
 
     const [lesson, setLesson] = useState<LessonData | null>(null);
     const [materials, setMaterials] = useState<Material[]>([]);
@@ -44,14 +47,14 @@ export default function LessonPage() {
                 setPlaylist(data.playlist);
             } catch (err) {
                 console.error(err);
-                alert("Не удалось загрузить урок");
+                showToast("Не удалось загрузить урок", "error");
             } finally {
                 setIsLoading(false);
             }
         };
 
         if (courseId && lessonId) fetchLessonData();
-    }, [courseId, lessonId]);
+    }, [courseId, lessonId, showToast]);
 
     const handleToggleComplete = async () => {
         if (!lesson || isUpdating) return;
@@ -70,10 +73,12 @@ export default function LessonPage() {
                 setPlaylist(playlist.map(item =>
                     item.id === lesson.id ? { ...item, isCompleted: newStatus } : item
                 ));
+            } else {
+                throw new Error("Ошибка обновления");
             }
         } catch (error) {
             console.error(error);
-            alert("Не удалось обновить статус");
+            showToast("Не удалось обновить статус", "error");
         } finally {
             setIsUpdating(false);
         }

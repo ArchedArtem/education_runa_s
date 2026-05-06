@@ -41,6 +41,8 @@ model User {
 
   course_likes    CourseLike[]
   course_comments CourseComment[]
+
+  ai_logs AiUsageLog[]
 }
 
 model Course {
@@ -168,4 +170,15 @@ model SystemSettings {
   allowRegistration  Boolean  @default(true)
   inviteOnly         Boolean  @default(true)
   updatedAt          DateTime @updatedAt
+}
+
+model AiUsageLog {
+  id                Int      @id @default(autoincrement())
+  user_id           String?
+  user              User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  prompt_tokens     Int
+  completion_tokens Int
+  total_tokens      Int
+  model_name        String   @default("llama-3.3-70b-versatile")
+  created_at        DateTime @default(now())
 }
