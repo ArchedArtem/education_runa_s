@@ -13,22 +13,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Введите email" }, { status: 400 });
         }
 
-        // 1. Ищем пользователя
         const user = await prisma.user.findUnique({ where: { email } });
 
-        // ВАЖНО: В целях безопасности мы не говорим, если email не найден,
-        // чтобы хакеры не могли перебирать почты. Просто возвращаем "успех".
         if (!user) {
             return NextResponse.json({ message: "Если email существует, письмо отправлено" }, { status: 200 });
         }
 
-        // 2. Генерируем надежный случайный токен
         const resetToken = crypto.randomBytes(32).toString("hex");
 
-        // Токен будет жить ровно 1 час (3600000 миллисекунд)
         const tokenExpires = new Date(Date.now() + 3600000);
 
-        // 3. Сохраняем токен в базу
         await prisma.user.update({
             where: { email },
             data: {
@@ -37,11 +31,9 @@ export async function POST(request: Request) {
             },
         });
 
-        // 4. Формируем ссылку для сброса
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         const resetLink = `${appUrl}/reset-password/${resetToken}`;
 
-        // 5. Отправляем письмо через Resend
         await resend.emails.send({
             from: `Руна С Обучение <${process.env.RESEND_FROM_EMAIL}>`,
             to: email,
