@@ -24,21 +24,17 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Невалидный токен' }, { status: 401 });
         }
 
-        // 1. Считаем клиентов (пользователей)
         const totalUsers = await prisma.user.count();
 
-        // 2. Активные курсы
         const activeCourses = await prisma.course.count({
             where: { is_published: true }
         });
 
-        // 3. Средний балл
         const avgScoreAgg = await prisma.testResult.aggregate({
             _avg: { score: true }
         });
         const avgTestScore = Math.round(avgScoreAgg._avg.score || 0);
 
-        // 4. Завершаемость (отношение пройденных уроков ко всем начатым)
         const totalProgress = await prisma.userProgress.count();
         const completedProgress = await prisma.userProgress.count({
             where: { is_completed: true }
@@ -47,7 +43,6 @@ export async function GET(req: Request) {
             ? Math.round((completedProgress / totalProgress) * 100)
             : 0;
 
-        // 5. Новые клиенты (последние 4)
         const recentUsers = await prisma.user.findMany({
             take: 4,
             orderBy: { created_at: 'desc' },
@@ -63,7 +58,6 @@ export async function GET(req: Request) {
             status: u.is_block ? 'Заблокирован' : 'Активен'
         }));
 
-        // 6. График: Уроки за последние 7 дней
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
         sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -76,14 +70,12 @@ export async function GET(req: Request) {
             select: { completed_at: true }
         });
 
-        // Формируем массив из 7 последних дней
         const chartData = [];
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
+            const dateStr = d.toISOString().split('T')[0];
 
-            // Считаем сколько уроков пройдено в этот день
             const count = recentActivity.filter(a =>
                 a.completed_at && a.completed_at.toISOString().startsWith(dateStr)
             ).length;
@@ -91,7 +83,6 @@ export async function GET(req: Request) {
             chartData.push({ date: dateStr, count });
         }
 
-        // Вычисляем максимум для высоты столбиков на фронтенде
         const maxActivity = Math.max(...chartData.map(d => d.count), 1);
 
         return NextResponse.json({
