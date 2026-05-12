@@ -50,6 +50,7 @@ export async function GET(
             comments: course.comments.map(c => ({
                 id: c.id,
                 text: c.text,
+                rating: c.rating,
                 date: c.created_at,
                 authorName: `${c.user.first_name} ${c.user.last_name}`.trim()
             })),
@@ -102,13 +103,19 @@ export async function POST(
             if (!body.text || body.text.trim() === '') return NextResponse.json({ error: "Пустой комментарий" }, { status: 400 });
 
             const comment = await prisma.courseComment.create({
-                data: { course_id: courseId, user_id: userId, text: body.text.trim() },
+                data: {
+                    course_id: courseId,
+                    user_id: userId,
+                    text: body.text.trim(),
+                    rating: body.rating ? Number(body.rating) : 5
+                },
                 include: { user: { select: { first_name: true, last_name: true } } }
             });
 
             return NextResponse.json({
                 id: comment.id,
                 text: comment.text,
+                rating: comment.rating,
                 date: comment.created_at,
                 authorName: `${comment.user.first_name} ${comment.user.last_name}`.trim()
             });

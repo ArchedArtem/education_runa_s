@@ -19,6 +19,16 @@ export default function StatisticPage() {
     const [filter, setFilter] = useState('all');
     const [userRole, setUserRole] = useState<string | null>(null);
 
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const [printSections, setPrintSections] = useState({
+        overview: true,
+        topStudents: true,
+        riskZones: true,
+        ai: true,
+        courses: true,
+        timeline: true
+    });
+
     useEffect(() => {
         const fetchStatsAndRole = async () => {
             setLoading(true);
@@ -46,17 +56,101 @@ export default function StatisticPage() {
         fetchStatsAndRole();
     }, [filter]);
 
+    const handleConfirmPrint = () => {
+        setIsPrintModalOpen(false);
+        setTimeout(() => window.print(), 100);
+    };
+
     return (
         <div className={styles.pageWrapper}>
+            {isPrintModalOpen && (
+                <div className={styles.printModalOverlay}>
+                    <div className={styles.printModal}>
+                        <div className={styles.printModalHeader}>
+                            <h2>Настройка отчета</h2>
+                            <button onClick={() => setIsPrintModalOpen(false)} className={styles.closeBtn}>
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <p className={styles.printModalDesc}>Выберите блоки данных для включения в печатный документ:</p>
+
+                        <div className={styles.printOptions}>
+                            <button type="button" className={`${styles.optionBtn} ${printSections.overview ? styles.optionSelected : ''}`} onClick={() => setPrintSections(s => ({ ...s, overview: !s.overview }))}>
+                                <div className={`${styles.checkControl} ${printSections.overview ? styles.checked : ''}`}>
+                                    {printSections.overview && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
+                                </div>
+                                <span className={styles.optionLabel}>Общая сводка (карточки)</span>
+                            </button>
+
+                            {userRole === 'Admin' && (
+                                <button type="button" className={`${styles.optionBtn} ${printSections.topStudents ? styles.optionSelected : ''}`} onClick={() => setPrintSections(s => ({ ...s, topStudents: !s.topStudents }))}>
+                                    <div className={`${styles.checkControl} ${printSections.topStudents ? styles.checked : ''}`}>
+                                        {printSections.topStudents && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
+                                    </div>
+                                    <span className={styles.optionLabel}>Рейтинг клиентов</span>
+                                </button>
+                            )}
+
+                            <button type="button" className={`${styles.optionBtn} ${printSections.riskZones ? styles.optionSelected : ''}`} onClick={() => setPrintSections(s => ({ ...s, riskZones: !s.riskZones }))}>
+                                <div className={`${styles.checkControl} ${printSections.riskZones ? styles.checked : ''}`}>
+                                    {printSections.riskZones && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
+                                </div>
+                                <span className={styles.optionLabel}>Зоны риска (Сложные тесты)</span>
+                            </button>
+
+                            {userRole === 'Admin' && data?.aiStats && (
+                                <button type="button" className={`${styles.optionBtn} ${printSections.ai ? styles.optionSelected : ''}`} onClick={() => setPrintSections(s => ({ ...s, ai: !s.ai }))}>
+                                    <div className={`${styles.checkControl} ${printSections.ai ? styles.checked : ''}`}>
+                                        {printSections.ai && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
+                                    </div>
+                                    <span className={styles.optionLabel}>Использование ИИ</span>
+                                </button>
+                            )}
+
+                            {userRole === 'Admin' && (
+                                <button type="button" className={`${styles.optionBtn} ${printSections.courses ? styles.optionSelected : ''}`} onClick={() => setPrintSections(s => ({ ...s, courses: !s.courses }))}>
+                                    <div className={`${styles.checkControl} ${printSections.courses ? styles.checked : ''}`}>
+                                        {printSections.courses && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
+                                    </div>
+                                    <span className={styles.optionLabel}>Популярность курсов</span>
+                                </button>
+                            )}
+
+                            <button type="button" className={`${styles.optionBtn} ${printSections.timeline ? styles.optionSelected : ''}`} onClick={() => setPrintSections(s => ({ ...s, timeline: !s.timeline }))}>
+                                <div className={`${styles.checkControl} ${printSections.timeline ? styles.checked : ''}`}>
+                                    {printSections.timeline && <span className={`material-symbols-outlined ${styles.checkIcon}`}>check</span>}
+                                </div>
+                                <span className={styles.optionLabel}>Хронология событий</span>
+                            </button>
+                        </div>
+
+                        <div className={styles.printModalFooter}>
+                            <button className={styles.btnCancel} onClick={() => setIsPrintModalOpen(false)}>Отмена</button>
+                            <button className={styles.btnConfirm} onClick={handleConfirmPrint}>
+                                <span className="material-symbols-outlined">print</span>
+                                Сформировать отчет
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <section className={styles.headerSection}>
                 <div>
                     <h1>Детальная статистика</h1>
                     <p>Анализ метрик, рейтинги клиентов и вовлеченность.</p>
                 </div>
-                <div className={styles.filterGroup}>
-                    <button className={filter === '7d' ? styles.active : ''} onClick={() => setFilter('7d')}>За 7 дней</button>
-                    <button className={filter === '30d' ? styles.active : ''} onClick={() => setFilter('30d')}>За 30 дней</button>
-                    <button className={filter === 'all' ? styles.active : ''} onClick={() => setFilter('all')}>За все время</button>
+
+                <div className={styles.headerActions}>
+                    <div className={styles.filterGroup}>
+                        <button className={filter === '7d' ? styles.active : ''} onClick={() => setFilter('7d')}>За 7 дней</button>
+                        <button className={filter === '30d' ? styles.active : ''} onClick={() => setFilter('30d')}>За 30 дней</button>
+                        <button className={filter === 'all' ? styles.active : ''} onClick={() => setFilter('all')}>За все время</button>
+                    </div>
+                    <button className={styles.printBtn} onClick={() => setIsPrintModalOpen(true)} title="Сформировать отчет">
+                        <span className="material-symbols-outlined">print</span>
+                        Печать
+                    </button>
                 </div>
             </section>
 
@@ -68,7 +162,7 @@ export default function StatisticPage() {
             ) : (
                 <>
                     {userRole === 'Admin' && (
-                        <section className={styles.statsGrid}>
+                        <section className={`${styles.statsGrid} ${!printSections.overview ? styles.noPrint : ''}`}>
                             <div className={styles.statCard}>
                                 <span className={styles.statLabel}>Уникальных клиентов</span>
                                 <span className={styles.statValue}>{data?.overview.activeUsers || 0}</span>
@@ -90,7 +184,7 @@ export default function StatisticPage() {
 
                     <section className={styles.bentoGridTop}>
                         {userRole === 'Admin' && (
-                            <div className={styles.panel}>
+                            <div className={`${styles.panel} ${!printSections.topStudents ? styles.noPrint : ''}`}>
                                 <div className={styles.panelHeader}>
                                     <h2>Топ клиентов</h2>
                                     <span className="material-symbols-outlined text-amber-500">emoji_events</span>
@@ -113,7 +207,7 @@ export default function StatisticPage() {
                             </div>
                         )}
 
-                        <div className={styles.panel}>
+                        <div className={`${styles.panel} ${!printSections.riskZones ? styles.noPrint : ''}`}>
                             <div className={styles.panelHeader}>
                                 <h2>Зоны риска (Сложные тесты)</h2>
                                 <span className="material-symbols-outlined text-red-500">warning</span>
@@ -147,7 +241,7 @@ export default function StatisticPage() {
                         </div>
 
                         {userRole === 'Admin' && data?.aiStats && (
-                            <div className={styles.panel}>
+                            <div className={`${styles.panel} ${!printSections.ai ? styles.noPrint : ''}`}>
                                 <div className={styles.panelHeader} style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1rem' }}>
                                     <h2>Использование ИИ</h2>
                                     <span className="material-symbols-outlined" style={{ color: '#8b5cf6' }}>smart_toy</span>
@@ -185,7 +279,7 @@ export default function StatisticPage() {
 
                     <section className={styles.bentoGridBottom}>
                         {userRole === 'Admin' && (
-                            <div className={styles.panel}>
+                            <div className={`${styles.panel} ${!printSections.courses ? styles.noPrint : ''}`}>
                                 <h2>Популярность курсов</h2>
                                 {data?.courseStats && data.courseStats.length > 0 ? (
                                     <div className={styles.courseList}>
@@ -209,7 +303,7 @@ export default function StatisticPage() {
                             </div>
                         )}
 
-                        <div className={styles.panel}>
+                        <div className={`${styles.panel} ${!printSections.timeline ? styles.noPrint : ''}`}>
                             <h2>Хронология событий</h2>
                             {data?.activityFeed && data.activityFeed.length > 0 ? (
                                 <div className={styles.timeline}>

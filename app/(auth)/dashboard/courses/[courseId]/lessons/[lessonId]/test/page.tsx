@@ -25,6 +25,11 @@ export default function TestPage() {
     const [resultScore, setResultScore] = useState(0);
     const [isPassed, setIsPassed] = useState(false);
 
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewText, setReviewText] = useState("");
+    const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
+    const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+
     useEffect(() => {
         const fetchTest = async () => {
             try {
@@ -101,6 +106,25 @@ export default function TestPage() {
         }
     };
 
+    const submitReview = async () => {
+        if (!reviewText.trim()) return;
+        setIsReviewSubmitting(true);
+        try {
+            const res = await fetch(`/api/courses/${courseId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'add_comment', text: reviewText, rating: reviewRating })
+            });
+            if (res.ok) {
+                setIsReviewSubmitted(true);
+            }
+        } catch (error) {
+            alert("Ошибка при отправке отзыва");
+        } finally {
+            setIsReviewSubmitting(false);
+        }
+    };
+
     const exitTest = () => {
         router.push(`/dashboard/courses/${courseId}/lessons/${lessonId}`);
     };
@@ -124,6 +148,47 @@ export default function TestPage() {
                             Проходной балл: {testData.passingScore}%.
                         </p>
                     </div>
+
+                    {isPassed && !isReviewSubmitted && (
+                        <div className={styles.reviewSection}>
+                            <h3 className={styles.reviewTitle}>Оцените курс и оставьте отзыв</h3>
+
+                            <div className={styles.starsContainer}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setReviewRating(star)}
+                                        className={`${styles.starBtn} ${star <= reviewRating ? styles.starActive : ''}`}
+                                    >
+                                        ★
+                                    </button>
+                                ))}
+                            </div>
+
+                            <textarea
+                                value={reviewText}
+                                onChange={(e) => setReviewText(e.target.value)}
+                                placeholder="Что вам понравилось? Что можно улучшить?"
+                                className={styles.reviewTextarea}
+                            />
+
+                            <button
+                                onClick={submitReview}
+                                disabled={isReviewSubmitting || !reviewText.trim()}
+                                className={styles.btnSubmitReview}
+                            >
+                                {isReviewSubmitting ? 'Отправка...' : 'Отправить отзыв'}
+                            </button>
+                        </div>
+                    )}
+
+                    {isPassed && isReviewSubmitted && (
+                        <div className={styles.reviewSuccess}>
+                            <span className="material-symbols-outlined">check_circle</span>
+                            Спасибо за ваш отзыв!
+                        </div>
+                    )}
 
                     <div className={styles.resultActions}>
                         {!isPassed && (

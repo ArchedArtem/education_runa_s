@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import styles from './course.module.scss';
 
 type Lesson = { id: number; title: string; is_completed: boolean };
-type CommentType = { id: number; text: string; authorName: string; date: string };
+type CommentType = { id: number; text: string; authorName: string; date: string; rating: number };
 type CourseDetail = {
     id: number;
     title: string;
@@ -29,6 +29,7 @@ export default function CourseOverviewPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const [newComment, setNewComment] = useState('');
+    const [newRating, setNewRating] = useState(5);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -81,7 +82,7 @@ export default function CourseOverviewPage() {
             const res = await fetch(`/api/courses/${courseId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'add_comment', text: newComment })
+                body: JSON.stringify({ action: 'add_comment', text: newComment, rating: newRating })
             });
 
             if (res.ok) {
@@ -91,6 +92,7 @@ export default function CourseOverviewPage() {
                     comments: [addedComment, ...course.comments]
                 });
                 setNewComment('');
+                setNewRating(5);
             }
         } catch (error) {
             console.error('Ошибка при отправке комментария');
@@ -199,6 +201,18 @@ export default function CourseOverviewPage() {
                     <div className={styles.commentsSection}>
                         <h3 className={styles.sidebarTitle}>Обсуждение ({course.comments.length})</h3>
                         <form onSubmit={handleAddComment} className={styles.commentForm}>
+                            <div className={styles.starsInputContainer}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setNewRating(star)}
+                                        className={`${styles.starBtn} ${star <= newRating ? styles.starActive : ''}`}
+                                    >
+                                        ★
+                                    </button>
+                                ))}
+                            </div>
                             <textarea
                                 placeholder="Поделитесь впечатлениями о курсе..."
                                 value={newComment}
@@ -221,6 +235,10 @@ export default function CourseOverviewPage() {
                                         <div className={styles.commentMeta}>
                                             <span className={styles.commentAuthor}>{comment.authorName}</span>
                                             <span className={styles.commentDate}>{new Date(comment.date).toLocaleDateString('ru-RU')}</span>
+                                        </div>
+                                        <div className={styles.commentRating}>
+                                            {'★'.repeat(comment.rating)}
+                                            <span className={styles.starInactive}>{'★'.repeat(5 - comment.rating)}</span>
                                         </div>
                                     </div>
                                     <p className={styles.commentText}>{comment.text}</p>
