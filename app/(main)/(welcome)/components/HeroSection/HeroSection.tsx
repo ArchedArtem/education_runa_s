@@ -18,23 +18,49 @@ export default function HeroSection() {
                 </Link>
             </div>
 
-            <div className={styles.mockupWrapper}>
-                <div className={styles.mockupGlow}></div>
-                <div className={styles.mockupCard}>
-                    <div className={styles.mockupBody}>
-                        <div className="flex-1 space-y-4">
-                            <div className="aspect-video bg-slate-800 rounded-xl relative flex items-center justify-center">
-                                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                                    <span className="material-symbols-outlined text-white text-2xl md:text-3xl">play_arrow</span>
-                                </div>
-                            </div>
-                            <div className="h-4 w-24 md:w-32 bg-slate-200 rounded"></div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-                                {[1, 2, 3, 4].map(i => <div key={i} className="h-8 md:h-10 bg-slate-100 rounded"></div>)}
-                            </div>
+            <div className={styles.visualSide}>
+                <div className={styles.sphere}></div>
+
+                <Link href="/dashboard" className={`${styles.infoCard} ${styles.cardProgress}`}>
+                    <div className={styles.cardIcon}>
+                        <span className="material-symbols-outlined">trending_up</span>
+                    </div>
+                    <div className={styles.cardData}>
+                        <span className={styles.cardLabel}>Ваш прогресс</span>
+                        <div className={styles.barContainer}>
+                            <div className={styles.barFill} style={{ width: '70%' }}></div>
                         </div>
                     </div>
-                </div>
+                    <div className={styles.cardValue}>70%</div>
+                </Link>
+
+                <Link href="/dashboard" className={`${styles.infoCard} ${styles.cardCert}`}>
+                    <div className={`${styles.cardIcon} ${styles.certIcon}`}>
+                        <span className="material-symbols-outlined">workspace_premium</span>
+                    </div>
+                    <div className={styles.cardData}>
+                        <span className={styles.cardLabel}>Достижения</span>
+                        <span className={styles.cardStatus}>Получено 3 сертификата</span>
+                    </div>
+                    <div className={styles.certBadge}>
+                        <span className="material-symbols-outlined">verified</span>
+                    </div>
+                </Link>
+
+                <Link href="/dashboard/courses" className={`${styles.infoCard} ${styles.cardCourses}`}>
+                    <div className={styles.cardIcon}>
+                        <span className="material-symbols-outlined">auto_stories</span>
+                    </div>
+                    <div className={styles.cardData}>
+                        <span className={styles.cardLabel}>Доступно курсов</span>
+                        <span className={styles.cardCount}>12 экспертных модулей</span>
+                    </div>
+                    <span className="material-symbols-outlined">chevron_right</span>
+                </Link>
+            </div>
+
+            <div className={styles.scrollHint}>
+                <span className="material-symbols-outlined">expand_more</span>
             </div>
         </section>
     );
