@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useToast } from '@/app/components/Providers/ToastProvider';
 import styles from './test.module.scss';
 
 type Option = { id: number; text: string; };
@@ -14,6 +15,8 @@ export default function TestPage() {
     const courseId = params.courseId as string;
     const lessonId = params.lessonId as string;
 
+    const { showToast } = useToast();
+
     const [testData, setTestData] = useState<TestData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +27,11 @@ export default function TestPage() {
     const [isFinished, setIsFinished] = useState(false);
     const [resultScore, setResultScore] = useState(0);
     const [isPassed, setIsPassed] = useState(false);
+
+    const [isCourseCompleted, setIsCourseCompleted] = useState(false);
+    const [certificateId, setCertificateId] = useState<string | null>(null);
+    const [isEmailSending, setIsEmailSending] = useState(false);
+    const [emailSent, setEmailSent] = useState(false);
 
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewText, setReviewText] = useState("");
@@ -39,14 +47,14 @@ export default function TestPage() {
                 setTestData(data);
             } catch (err) {
                 console.error(err);
-                alert("Не удалось загрузить тест.");
+                showToast("Не удалось загрузить тест", "error");
                 router.push(`/dashboard/courses/${courseId}/lessons/${lessonId}`);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchTest();
-    }, [courseId, lessonId, router]);
+    }, [courseId, lessonId, router, showToast]);
 
     if (isLoading || !testData) {
         return (
@@ -98,9 +106,13 @@ export default function TestPage() {
             const data = await res.json();
             setResultScore(data.score);
             setIsPassed(data.isPassed);
+            if (data.isCourseCompleted) {
+                setIsCourseCompleted(true);
+                setCertificateId(data.certificateId);
+            }
             setIsFinished(true);
         } catch (error) {
-            alert("Произошла ошибка при отправке результатов.");
+            showToast("Произошла ошибка при отправке результатов", "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -117,11 +129,36 @@ export default function TestPage() {
             });
             if (res.ok) {
                 setIsReviewSubmitted(true);
+                showToast("Спасибо за ваш отзыв!", "success");
+            } else {
+                throw new Error("Ошибка сервера");
             }
         } catch (error) {
-            alert("Ошибка при отправке отзыва");
+            showToast("Ошибка при отправке отзыва", "error");
         } finally {
             setIsReviewSubmitting(false);
+        }
+    };
+
+    const handleGetCertificate = async () => {
+        if (!certificateId) return;
+        setIsEmailSending(true);
+        try {
+            const res = await fetch(`/api/courses/${courseId}/certificate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ certificateId })
+            });
+            if (res.ok) {
+                setEmailSent(true);
+                showToast("Сертификат успешно отправлен на вашу почту!", "success");
+            } else {
+                throw new Error("Ошибка сервера");
+            }
+        } catch (error) {
+            showToast("Ошибка при запросе сертификата", "error");
+        } finally {
+            setIsEmailSending(false);
         }
     };
 
@@ -148,6 +185,30 @@ export default function TestPage() {
                             Проходной балл: {testData.passingScore}%.
                         </p>
                     </div>
+
+                    {isCourseCompleted && (
+                        <div className={styles.certificateSection}>
+                            <div className={styles.certHighlightIcon}>
+                                <span className="material-symbols-outlined">workspace_premium</span>
+                            </div>
+
+                            <div className={styles.certTextContent}>
+                                <h3 className={styles.certTitle}>Курс успешно завершен</h3>
+                                <p className={styles.certDesc}>Ваш именной сертификат сгенерирован и добавлен в личный кабинет.</p>
+                            </div>
+
+                            <button
+                                onClick={handleGetCertificate}
+                                disabled={isEmailSending || emailSent}
+                                className={styles.btnCertificate}
+                            >
+                                <span className="material-symbols-outlined">
+                                    {emailSent ? 'mark_email_read' : 'mail'}
+                                </span>
+                                {emailSent ? 'Отправлено на email' : isEmailSending ? 'Отправка...' : 'Получить на email'}
+                            </button>
+                        </div>
+                    )}
 
                     {isPassed && !isReviewSubmitted && (
                         <div className={styles.reviewSection}>

@@ -462,3 +462,82 @@
     font-size: 1.5rem;
   }
 }
+
+.certificateSection {
+  margin-top: 0.5rem;
+  padding: 1.5rem;
+  background-color: #f8fafc; /* Тот же фон, что и у блока с отзывом */
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: center;
+  text-align: center;
+  animation: slideInUp 0.5s ease-out;
+}
+
+.certHighlightIcon {
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: rgba(245, 158, 11, 0.15); /* Золотистый оттенок как в HeroSection */
+  color: #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  span {
+    font-size: 2rem;
+  }
+}
+
+.certTextContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.certTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a; /* Основной темный цвет текста в проекте */
+  margin: 0;
+}
+
+.certDesc {
+  font-size: 0.875rem;
+  color: #64748b; /* Приглушенный серый как везде в описаниях */
+  margin: 0;
+  line-height: 1.4;
+}
+
+.btnCertificate {
+  width: 100%;
+  height: 3rem;
+  background-color: #0f172a; /* Темная кнопка как btnNext и btnSubmitReview */
+  color: #ffffff;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #1e293b;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  span {
+    font-size: 1.25rem;
+  }
+}

@@ -16,7 +16,7 @@ model InviteCode {
 
 model Role {
   id          Int      @id @default(autoincrement())
-  name        String   @unique 
+  name        String   @unique
   description String?
   users       User[]
 }
@@ -25,7 +25,7 @@ model User {
   id            String         @id @default(uuid())
   role_id       Int
   role          Role           @relation(fields: [role_id], references: [id])
-  company_name  String?        
+  company_name  String?
   first_name    String
   last_name     String
   email         String         @unique
@@ -35,7 +35,7 @@ model User {
 
   reset_token         String?   @unique
   reset_token_expires DateTime?
-  
+
   progress      UserProgress[]
   test_results  TestResult[]
 
@@ -43,6 +43,7 @@ model User {
   course_comments CourseComment[]
 
   ai_logs AiUsageLog[]
+  certificates Certificate[]
 }
 
 model Course {
@@ -54,11 +55,12 @@ model Course {
   thumbnail_url    String?
   is_published     Boolean   @default(false)
   created_at       DateTime  @default(now())
-  
+
   lessons          Lesson[]
   tests            Test[]
-  likes    CourseLike[]
-  comments CourseComment[]
+  likes            CourseLike[]
+  comments         CourseComment[]
+  certificates     Certificate[]
 }
 
 model Lesson {
@@ -96,7 +98,7 @@ model Test {
   lesson        Lesson?   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
   title         String
   passing_score Int
-  
+
   questions     Question[]
   results       TestResult[]
 }
@@ -107,7 +109,7 @@ model Question {
   test          Test     @relation(fields: [test_id], references: [id], onDelete: Cascade)
   question_text String   @db.Text
   question_type String
-  
+
   answers       Answer[]
 }
 
@@ -182,4 +184,18 @@ model AiUsageLog {
   total_tokens      Int
   model_name        String   @default("llama-3.3-70b-versatile")
   created_at        DateTime @default(now())
+}
+
+model Certificate {
+  id                 String   @id @default(uuid())
+  user_id            String
+  course_id          Int
+  certificate_number String   @unique
+  issued_at          DateTime @default(now())
+  pdf_url            String?
+
+  user               User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course             Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, course_id])
 }

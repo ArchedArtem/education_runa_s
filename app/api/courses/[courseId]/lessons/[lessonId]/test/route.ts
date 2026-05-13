@@ -70,6 +70,7 @@ export async function POST(
 
         const resolvedParams = await params;
         const lessonId = parseInt(resolvedParams.lessonId, 10);
+        const courseId = parseInt(resolvedParams.courseId, 10);
 
         const { answers } = await request.json();
 
@@ -97,6 +98,9 @@ export async function POST(
         const score = Math.round((correctCount / totalQuestions) * 100);
         const isPassed = score >= test.passing_score;
 
+        let isCourseCompleted = false;
+        let certificateId = null;
+
         await prisma.$transaction(async (tx) => {
             await tx.testResult.create({
                 data: {
@@ -122,10 +126,53 @@ export async function POST(
                         data: { user_id: userId, lesson_id: lessonId, is_completed: true }
                     });
                 }
+
+                const allTests = await tx.test.findMany({
+                    where: {
+                        lesson: { course_id: courseId }
+                    }
+                });
+
+                const passedResults = await tx.testResult.findMany({
+                    where: {
+                        user_id: userId,
+                        is_passed: true,
+                        test: { lesson: { course_id: courseId } }
+                    },
+                    distinct: ['test_id']
+                });
+
+                if (allTests.length > 0 && passedResults.length >= allTests.length) {
+                    isCourseCompleted = true;
+
+                    let cert = await tx.certificate.findUnique({
+                        where: {
+                            user_id_course_id: { user_id: userId, course_id: courseId }
+                        }
+                    });
+
+                    if (!cert) {
+                        const certNumber = `RUNA-${courseId}-${userId.substring(0, 6).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+                        cert = await tx.certificate.create({
+                            data: {
+                                user_id: userId,
+                                course_id: courseId,
+                                certificate_number: certNumber
+                            }
+                        });
+                    }
+                    certificateId = cert.id;
+                }
             }
         });
 
-        return NextResponse.json({ score, isPassed, passingScore: test.passing_score }, { status: 200 });
+        return NextResponse.json({
+            score,
+            isPassed,
+            passingScore: test.passing_score,
+            isCourseCompleted,
+            certificateId
+        }, { status: 200 });
 
     } catch (error) {
         console.error("POST Test Submit Error:", error);

@@ -96,6 +96,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                     <span className="material-symbols-outlined">quiz</span>
                     <span className="text-sm">Тестирования</span>
                 </Link>
+                <Link href="/dashboard/certificates" className={getLinkClass("/dashboard/certificates")}>
+                    <span className="material-symbols-outlined">workspace_premium</span>
+                    <span className="text-sm">Сертификаты</span>
+                </Link>
                 <Link href="/dashboard/settings" className={getLinkClass("/dashboard/settings")}>
                     <span className="material-symbols-outlined">settings</span>
                     <span className="text-sm">Настройки</span>
