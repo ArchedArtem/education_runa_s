@@ -64,10 +64,20 @@ export async function POST(
             const isLocal = process.env.NODE_ENV === 'development';
             const localExecutablePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 
+            if (!isLocal && typeof (chromium as any).setGraphicsMode === 'function') {
+                (chromium as any).setGraphicsMode(false);
+            }
+
             browser = await puppeteer.launch({
                 args: isLocal
                     ? puppeteer.defaultArgs()
-                    : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+                    : [
+                        ...chromium.args,
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu'
+                    ],
                 defaultViewport: { width: 1920, height: 1080 },
                 executablePath: isLocal ? localExecutablePath : await chromium.executablePath(),
                 headless: isLocal ? true : (chromium as any).headless,
