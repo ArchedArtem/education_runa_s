@@ -24,7 +24,6 @@ export default function ConfirmModal({
                                          onCancel,
                                          isDangerous = false
                                      }: ConfirmModalProps) {
-    // Блокируем скролл страницы, когда модалка открыта
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';

@@ -36,6 +36,8 @@ export async function POST(
     request: Request,
     { params }: { params: Promise<{ courseId: string }> }
 ) {
+    let browser: any = null;
+
     try {
         const userId = await getUserId();
         if (!userId) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
@@ -62,11 +64,13 @@ export async function POST(
             const isLocal = process.env.NODE_ENV === 'development';
             const localExecutablePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 
-            const browser = await puppeteer.launch({
-                args: isLocal ? puppeteer.defaultArgs() : chromium.args,
+            browser = await puppeteer.launch({
+                args: isLocal
+                    ? puppeteer.defaultArgs()
+                    : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
                 defaultViewport: { width: 1920, height: 1080 },
                 executablePath: isLocal ? localExecutablePath : await chromium.executablePath(),
-                headless: true,
+                headless: isLocal ? true : (chromium as any).headless,
             });
 
             const page = await browser.newPage();
@@ -299,7 +303,7 @@ export async function POST(
             `;
 
             await page.setContent(htmlContent, { waitUntil: 'load' });
-            await page.evaluateHandle('document.fonts.ready');
+            await page.evaluate(() => document.fonts.ready);
 
             const pdfBuffer = await page.pdf({
                 format: 'A4',
@@ -308,6 +312,7 @@ export async function POST(
             });
 
             await browser.close();
+            browser = null;
 
             const uniqueFileName = `certificates/${crypto.randomUUID()}-cert.pdf`;
 
@@ -357,5 +362,9 @@ export async function POST(
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
     }
 }
