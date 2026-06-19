@@ -20,7 +20,7 @@ export default function Footer() {
                 <Link href="/contacts" className="text-xs font-medium hover:text-blue-700 transition-colors">
                     Поддержка
                 </Link>
-                <Link href="/privacy" className="text-xs font-medium hover:text-blue-700 transition-colors">
+                <Link href="https://runa-rebranding.vercel.app/policy" className="text-xs font-medium hover:text-blue-700 transition-colors">
                     Политика конфиденциальности
                 </Link>
             </div>
